@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TaskFlow AI</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================
+         PAGE LOADER
+    ========================================== -->
+
+    <div id="pageLoader" class="page-loader">
+
+        <div class="loader-spinner"></div>
+
+        <p>Loading TaskFlow AI...</p>
+
+    </div>
+
+
+    <!-- =========================================
+         APP
+    ========================================== -->
+
+    <div class="app">
+
+        <!-- =====================================
+             HEADER
+        ====================================== -->
+
+        <header class="header">
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    ✓
+                </div>
+
+                <div>
+                    <h1>TaskFlow AI</h1>
+
+                    <p>Organize. Focus. Accomplish.</p>
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <button
+                    id="darkModeButton"
+                    class="icon-button"
+                    title="Toggle dark mode"
+                >
+                    🌙
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================
+             DASHBOARD STATS
+        ====================================== -->
+
+        <section class="stats-section">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📋
+                </div>
+
+                <div>
+                    <span>Total Tasks</span>
+                    <strong id="totalTasks">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ⏳
+                </div>
+
+                <div>
+                    <span>Pending</span>
+                    <strong id="pendingTasks">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ✅
+                </div>
+
+                <div>
+                    <span>Completed</span>
+                    <strong id="completedTasks">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📈
+                </div>
+
+                <div>
+                    <span>Progress</span>
+                    <strong id="completionRate">0%</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             PRODUCTIVITY DASHBOARD
+        ====================================== -->
+
+        <section class="productivity-section">
+
+            <div class="productivity-header">
+
+                <div>
+
+                    <h2>Productivity Overview</h2>
+
+                    <p>Quickly view your current workload.</p>
+
+                </div>
+
+            </div>
+
+
+            <div class="productivity-grid">
+
+                <button
+                    class="productivity-card"
+                    data-view="today"
+                >
+
+                    <div class="productivity-icon">
+                        📅
+                    </div>
+
+                    <div class="productivity-info">
+
+                        <span>Today</span>
+
+                        <strong id="todayCount">0</strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="productivity-card"
+                    data-view="upcoming"
+                >
+
+                    <div class="productivity-icon">
+                        🔜
+                    </div>
+
+                    <div class="productivity-info">
+
+                        <span>Upcoming</span>
+
+                        <strong id="upcomingCount">0</strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="productivity-card"
+                    data-view="overdue"
+                >
+
+                    <div class="productivity-icon">
+                        ⚠️
+                    </div>
+
+                    <div class="productivity-info">
+
+                        <span>Overdue</span>
+
+                        <strong id="overdueCount">0</strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="productivity-card"
+                    data-view="completed"
+                >
+
+                    <div class="productivity-icon">
+                        🏆
+                    </div>
+
+                    <div class="productivity-info">
+
+                        <span>Completed</span>
+
+                        <strong id="dashboardCompletedCount">0</strong>
+
+                    </div>
+
+                </button>
+
+            </div>
+
+
+            <div class="view-toolbar">
+
+                <p id="activeViewText" class="active-view-text">
+                    Showing all tasks
+                </p>
+
+                <button
+                    id="clearViewButton"
+                    class="clear-view-button"
+                >
+                    Clear View
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             ADD TASK
+        ====================================== -->
+
+        <section class="task-form-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Create a New Task</h2>
+
+                    <p>Add something you want to accomplish.</p>
+
+                </div>
+
+            </div>
+
+
+            <form id="taskForm" class="task-form">
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Task Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        placeholder="What needs to be done?"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        placeholder="Add some details..."
+                        rows="3"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label for="priority">
+                            Priority
+                        </label>
+
+                        <select id="priority">
+
+                            <option value="high">
+                                High
+                            </option>
+
+                            <option value="medium" selected>
+                                Medium
+                            </option>
+
+                            <option value="low">
+                                Low
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+                        <select id="category">
+
+                            <option value="Work">
+                                Work
+                            </option>
+
+                            <option value="Study">
+                                Study
+                            </option>
+
+                            <option value="Personal">
+                                Personal
+                            </option>
+
+                            <option value="Health">
+                                Health
+                            </option>
+
+                            <option value="Other" selected>
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="date">
+                            Due Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    id="addTaskButton"
+                    class="primary-button"
+                >
+                    <span class="button-text">
+                        + Add Task
+                    </span>
+
+                    <span class="button-loader"></span>
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- =====================================
+             SEARCH AND FILTER
+        ====================================== -->
+
+        <section class="controls-section">
+
+            <div class="search-container">
+
+                <span class="search-icon">
+                    🔍
+                </span>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search tasks..."
+                >
+
+            </div>
+
+
+            <div class="filter-container">
+
+                <select id="priorityFilter">
+
+                    <option value="all">
+                        All Priorities
+                    </option>
+
+                    <option value="high">
+                        High Priority
+                    </option>
+
+                    <option value="medium">
+                        Medium Priority
+                    </option>
+
+                    <option value="low">
+                        Low Priority
+                    </option>
+
+                </select>
+
+
+                <select id="categoryFilter">
+
+                    <option value="all">
+                        All Categories
+                    </option>
+
+                    <option value="Work">
+                        Work
+                    </option>
+
+                    <option value="Study">
+                        Study
+                    </option>
+
+                    <option value="Personal">
+                        Personal
+                    </option>
+
+                    <option value="Health">
+                        Health
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             TASK LIST
+        ====================================== -->
+
+        <section class="tasks-section">
+
+            <div class="section-heading task-heading">
+
+                <div>
+
+                    <h2>Your Tasks</h2>
+
+                    <p id="taskCountText">
+                        0 tasks
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="taskList"
+                class="task-list"
+            ></div>
+
+
+            <div
+                id="emptyState"
+                class="empty-state hidden"
+            >
+
+                <div class="empty-icon">
+                    ✨
+                </div>
+
+                <h3 id="emptyTitle">
+                    No tasks found
+                </h3>
+
+                <p id="emptyDescription">
+                    Create your first task and start making progress.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             ANALYTICS
+        ====================================== -->
+
+        <section class="analytics-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>Analytics</h2>
+
+                    <p>Your productivity at a glance.</p>
+
+                </div>
+
+            </div>
+
+
+            <div class="analytics-grid">
+
+                <div class="analytics-card">
+
+                    <span>High Priority</span>
+
+                    <strong id="highPriorityCount">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Medium Priority</span>
+
+                    <strong id="mediumPriorityCount">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Low Priority</span>
+
+                    <strong id="lowPriorityCount">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="analytics-card">
+
+                    <span>Completion Rate</span>
+
+                    <strong id="analyticsCompletionRate">
+                        0%
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             AI DAILY PLAN
+        ====================================== -->
+
+        <section class="ai-section">
+
+            <div class="ai-header">
+
+                <div>
+
+                    <h2>🤖 AI Daily Plan</h2>
+
+                    <p>
+                        Get a prioritized plan from your pending tasks.
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="generatePlanButton"
+                    class="ai-button"
+                >
+
+                    <span class="button-text">
+                        ✨ Generate Plan
+                    </span>
+
+                    <span class="button-loader"></span>
+
+                </button>
+
+            </div>
+
+
+            <div
+                id="aiPlan"
+                class="ai-plan hidden"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================
+             FOOTER
+        ====================================== -->
+
+        <footer class="footer">
+
+            <p>
+                TaskFlow AI • Built with HTML, CSS, JavaScript, FastAPI & SQLite
+            </p>
+
+        </footer>
+
+    </div>
+
+
+    <!-- =========================================
+         EDIT MODAL
+    ========================================== -->
+
+    <div
+        id="editModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-overlay"></div>
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2>Edit Task</h2>
+
+                    <p>Update your task details.</p>
+
+                </div>
+
+                <button
+                    id="closeModalButton"
+                    class="close-button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="editTaskForm">
+
+                <input
+                    type="hidden"
+                    id="editTaskId"
+                >
+
+
+                <div class="form-group">
+
+                    <label for="editTitle">
+                        Task Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editTitle"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="editDescription"
+                        rows="4"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label for="editPriority">
+                            Priority
+                        </label>
+
+                        <select id="editPriority">
+
+                            <option value="high">
+                                High
+                            </option>
+
+                            <option value="medium">
+                                Medium
+                            </option>
+
+                            <option value="low">
+                                Low
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="editCategory">
+                            Category
+                        </label>
+
+                        <select id="editCategory">
+
+                            <option value="Work">
+                                Work
+                            </option>
+
+                            <option value="Study">
+                                Study
+                            </option>
+
+                            <option value="Personal">
+                                Personal
+                            </option>
+
+                            <option value="Health">
+                                Health
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editDate">
+                        Due Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="editDate"
+                    >
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        id="cancelEditButton"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         TOAST CONTAINER
+    ========================================== -->
+
+    <div
+        id="toastContainer"
+        class="toast-container"
+    ></div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
