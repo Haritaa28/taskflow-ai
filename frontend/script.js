@@ -1,102 +1,57 @@
 // =========================================
-// CONFIGURATION
+// TASKFLOW AI - FRONTEND JAVASCRIPT
 // =========================================
 
 const API_URL = "/api";
-
 
 // =========================================
 // GLOBAL STATE
 // =========================================
 
 let tasks = [];
-
 let currentView = "all";
-
 let editingTaskId = null;
-
 
 // =========================================
 // DOM ELEMENTS
 // =========================================
 
-const taskForm =
-    document.getElementById("taskForm");
+const taskForm = document.getElementById("taskForm");
+const titleInput = document.getElementById("title");
+const descriptionInput = document.getElementById("description");
+const priorityInput = document.getElementById("priority");
+const categoryInput = document.getElementById("category");
+const dateInput = document.getElementById("date");
 
-const titleInput =
-    document.getElementById("title");
+const taskList = document.getElementById("taskList");
+const emptyState = document.getElementById("emptyState");
+const emptyTitle = document.getElementById("emptyTitle");
+const emptyDescription = document.getElementById("emptyDescription");
 
-const descriptionInput =
-    document.getElementById("description");
+const searchInput = document.getElementById("searchInput");
+const priorityFilter = document.getElementById("priorityFilter");
+const categoryFilter = document.getElementById("categoryFilter");
 
-const priorityInput =
-    document.getElementById("priority");
+const editModal = document.getElementById("editModal");
+const editTaskForm = document.getElementById("editTaskForm");
 
-const categoryInput =
-    document.getElementById("category");
+const editTaskId = document.getElementById("editTaskId");
+const editTitle = document.getElementById("editTitle");
+const editDescription = document.getElementById("editDescription");
+const editPriority = document.getElementById("editPriority");
+const editCategory = document.getElementById("editCategory");
+const editDate = document.getElementById("editDate");
 
-const dateInput =
-    document.getElementById("date");
-
-const taskList =
-    document.getElementById("taskList");
-
-const emptyState =
-    document.getElementById("emptyState");
-
-const emptyTitle =
-    document.getElementById("emptyTitle");
-
-const emptyDescription =
-    document.getElementById("emptyDescription");
-
-const searchInput =
-    document.getElementById("searchInput");
-
-const priorityFilter =
-    document.getElementById("priorityFilter");
-
-const categoryFilter =
-    document.getElementById("categoryFilter");
-
-const editModal =
-    document.getElementById("editModal");
-
-const editTaskForm =
-    document.getElementById("editTaskForm");
-
-const editTaskId =
-    document.getElementById("editTaskId");
-
-const editTitle =
-    document.getElementById("editTitle");
-
-const editDescription =
-    document.getElementById("editDescription");
-
-const editPriority =
-    document.getElementById("editPriority");
-
-const editCategory =
-    document.getElementById("editCategory");
-
-const editDate =
-    document.getElementById("editDate");
-
-const toastContainer =
-    document.getElementById("toastContainer");
-
-const aiPlan =
-    document.getElementById("aiPlan");
-
+const toastContainer = document.getElementById("toastContainer");
+const aiPlan = document.getElementById("aiPlan");
 
 // =========================================
 // PAGE INITIALIZATION
 // =========================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+document.addEventListener("DOMContentLoaded", async () => {
+
+    try {
 
         setupEventListeners();
 
@@ -104,11 +59,17 @@ document.addEventListener(
 
         await loadTasks();
 
+    } catch (error) {
+
+        console.error("Initialization error:", error);
+
+    } finally {
+
         hidePageLoader();
 
     }
-);
 
+});
 
 // =========================================
 // EVENT LISTENERS
@@ -117,47 +78,46 @@ document.addEventListener(
 function setupEventListeners() {
 
     // Add task
-
-    taskForm.addEventListener(
-        "submit",
-        createTask
-    );
-
+    if (taskForm) {
+        taskForm.addEventListener(
+            "submit",
+            createTask
+        );
+    }
 
     // Edit task
-
-    editTaskForm.addEventListener(
-        "submit",
-        updateTask
-    );
-
+    if (editTaskForm) {
+        editTaskForm.addEventListener(
+            "submit",
+            updateTask
+        );
+    }
 
     // Search
-
-    searchInput.addEventListener(
-        "input",
-        displayTasks
-    );
-
+    if (searchInput) {
+        searchInput.addEventListener(
+            "input",
+            displayTasks
+        );
+    }
 
     // Priority filter
-
-    priorityFilter.addEventListener(
-        "change",
-        displayTasks
-    );
-
+    if (priorityFilter) {
+        priorityFilter.addEventListener(
+            "change",
+            displayTasks
+        );
+    }
 
     // Category filter
-
-    categoryFilter.addEventListener(
-        "change",
-        displayTasks
-    );
-
+    if (categoryFilter) {
+        categoryFilter.addEventListener(
+            "change",
+            displayTasks
+        );
+    }
 
     // Productivity cards
-
     document
         .querySelectorAll(".productivity-card")
         .forEach(card => {
@@ -176,69 +136,118 @@ function setupEventListeners() {
 
         });
 
-
     // Clear productivity view
+    const clearViewButton =
+        document.getElementById(
+            "clearViewButton"
+        );
 
-    document
-        .getElementById("clearViewButton")
-        .addEventListener(
+    if (clearViewButton) {
+
+        clearViewButton.addEventListener(
             "click",
             clearProductivityView
         );
 
+    }
 
     // Dark mode
+    const darkModeButton =
+        document.getElementById(
+            "darkModeButton"
+        );
 
-    document
-        .getElementById("darkModeButton")
-        .addEventListener(
+    if (darkModeButton) {
+
+        darkModeButton.addEventListener(
             "click",
             toggleDarkMode
         );
 
+    }
 
-    // AI plan
+    // AI daily plan
+    const generatePlanButton =
+        document.getElementById(
+            "generatePlanButton"
+        );
 
-    document
-        .getElementById("generatePlanButton")
-        .addEventListener(
+    if (generatePlanButton) {
+
+        generatePlanButton.addEventListener(
+            "click",
             generateAIPlan
         );
 
+    }
 
-    // Modal buttons
-
-    document
-        .getElementById("closeModalButton")
-        .addEventListener(
-            closeEditModal
+    // Close modal
+    const closeModalButton =
+        document.getElementById(
+            "closeModalButton"
         );
 
+    if (closeModalButton) {
 
-    document
-        .getElementById("cancelEditButton")
-        .addEventListener(
-            closeEditModal
-        );
-
-
-    document
-        .querySelector(".modal-overlay")
-        .addEventListener(
+        closeModalButton.addEventListener(
             "click",
             closeEditModal
         );
 
+    }
+
+    // Cancel edit
+    const cancelEditButton =
+        document.getElementById(
+            "cancelEditButton"
+        );
+
+    if (cancelEditButton) {
+
+        cancelEditButton.addEventListener(
+            "click",
+            closeEditModal
+        );
+
+    }
+
+    // Modal overlay
+    const modalOverlay =
+        document.querySelector(
+            ".modal-overlay"
+        );
+
+    if (modalOverlay) {
+
+        modalOverlay.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    modalOverlay
+                ) {
+
+                    closeEditModal();
+
+                }
+
+            }
+        );
+
+    }
 
     // Escape key
-
     document.addEventListener(
         "keydown",
         event => {
 
             if (
                 event.key === "Escape" &&
-                !editModal.classList.contains("hidden")
+                editModal &&
+                !editModal.classList.contains(
+                    "hidden"
+                )
             ) {
 
                 closeEditModal();
@@ -250,7 +259,6 @@ function setupEventListeners() {
 
 }
 
-
 // =========================================
 // LOAD TASKS
 // =========================================
@@ -260,21 +268,20 @@ async function loadTasks() {
     try {
 
         const response =
-            await fetch(`${API_URL}/tasks`);
-
+            await fetch(
+                `${API_URL}/tasks`
+            );
 
         if (!response.ok) {
 
             throw new Error(
-                "Unable to load tasks"
+                `Unable to load tasks: ${response.status}`
             );
 
         }
 
-
         tasks =
             await response.json();
-
 
         displayTasks();
 
@@ -284,11 +291,22 @@ async function loadTasks() {
 
         updateAnalytics();
 
-    }
+    } catch (error) {
 
-    catch (error) {
+        console.error(
+            "Load tasks error:",
+            error
+        );
 
-        console.error(error);
+        tasks = [];
+
+        displayTasks();
+
+        updateStats();
+
+        updateProductivityCards();
+
+        updateAnalytics();
 
         showToast(
             "Could not connect to the TaskFlow AI server.",
@@ -299,53 +317,58 @@ async function loadTasks() {
 
 }
 
-
 // =========================================
 // DISPLAY TASKS
 // =========================================
 
 function displayTasks() {
 
-    const searchText =
-        searchInput.value
-            .trim()
-            .toLowerCase();
+    if (!taskList) {
+        return;
+    }
 
+    const searchText =
+        searchInput
+            ? searchInput.value
+                .trim()
+                .toLowerCase()
+            : "";
 
     const selectedPriority =
-        priorityFilter.value;
-
+        priorityFilter
+            ? priorityFilter.value
+            : "all";
 
     const selectedCategory =
-        categoryFilter.value;
+        categoryFilter
+            ? categoryFilter.value
+            : "all";
 
-
-    let filteredTasks =
+    const filteredTasks =
         tasks.filter(task => {
 
-            const matchesSearch =
-                task.title
-                    .toLowerCase()
-                    .includes(searchText) ||
+            const title =
+                (task.title || "")
+                    .toLowerCase();
 
+            const description =
                 (task.description || "")
-                    .toLowerCase()
-                    .includes(searchText);
+                    .toLowerCase();
 
+            const matchesSearch =
+                title.includes(searchText) ||
+                description.includes(searchText);
 
             const matchesPriority =
                 selectedPriority === "all" ||
                 task.priority === selectedPriority;
 
-
             const matchesCategory =
                 selectedCategory === "all" ||
                 task.category === selectedCategory;
 
-
             const matchesView =
                 matchesProductivityView(task);
-
 
             return (
                 matchesSearch &&
@@ -356,16 +379,15 @@ function displayTasks() {
 
         });
 
-
     taskList.innerHTML = "";
-
 
     updateTaskCountText(
         filteredTasks.length
     );
 
-
-    if (filteredTasks.length === 0) {
+    if (
+        filteredTasks.length === 0
+    ) {
 
         showEmptyState();
 
@@ -373,25 +395,20 @@ function displayTasks() {
 
     }
 
-
     hideEmptyState();
 
+    filteredTasks.forEach(task => {
 
-    filteredTasks.forEach(
-        task => {
+        const taskElement =
+            createTaskElement(task);
 
-            const taskElement =
-                createTaskElement(task);
+        taskList.appendChild(
+            taskElement
+        );
 
-            taskList.appendChild(
-                taskElement
-            );
-
-        }
-    );
+    });
 
 }
-
 
 // =========================================
 // CREATE TASK ELEMENT
@@ -402,41 +419,38 @@ function createTaskElement(task) {
     const card =
         document.createElement("div");
 
-
     card.className =
         "task-card";
 
-
     if (task.completed) {
 
-        card.classList.add("completed");
+        card.classList.add(
+            "completed"
+        );
 
     }
-
 
     if (
         isOverdue(task) &&
         !task.completed
     ) {
 
-        card.classList.add("overdue");
+        card.classList.add(
+            "overdue"
+        );
 
     }
-
 
     const dueStatus =
         getDueStatus(task);
 
-
     const priorityClass =
         `priority-${task.priority}`;
-
 
     const formattedDate =
         task.date
             ? formatDate(task.date)
             : "No due date";
-
 
     card.innerHTML = `
 
@@ -459,14 +473,14 @@ function createTaskElement(task) {
 
                     ${
                         task.description
-                        ?
-                        `
-                        <div class="task-description">
-                            ${escapeHTML(task.description)}
-                        </div>
-                        `
-                        :
-                        ""
+                            ? `
+                                <div class="task-description">
+                                    ${escapeHTML(
+                                        task.description
+                                    )}
+                                </div>
+                            `
+                            : ""
                     }
 
                     <div class="task-meta">
@@ -483,7 +497,9 @@ function createTaskElement(task) {
                             📅 ${formattedDate}
                         </span>
 
-                        <span class="task-status ${dueStatus.className}">
+                        <span
+                            class="task-status ${dueStatus.className}"
+                        >
                             ${dueStatus.text}
                         </span>
 
@@ -493,12 +509,12 @@ function createTaskElement(task) {
 
             </div>
 
-
             <div class="task-actions">
 
                 <button
                     class="task-action-button edit-button"
                     title="Edit task"
+                    type="button"
                 >
                     ✏️
                 </button>
@@ -506,6 +522,7 @@ function createTaskElement(task) {
                 <button
                     class="task-action-button delete-button"
                     title="Delete task"
+                    type="button"
                 >
                     🗑️
                 </button>
@@ -513,45 +530,57 @@ function createTaskElement(task) {
             </div>
 
         </div>
+
     `;
 
-
     // Checkbox
-
     const checkbox =
-        card.querySelector(".task-checkbox");
+        card.querySelector(
+            ".task-checkbox"
+        );
 
+    if (checkbox) {
 
-    checkbox.addEventListener(
-        "change",
-        () => toggleTask(task.id)
-    );
+        checkbox.addEventListener(
+            "change",
+            () => toggleTask(task.id)
+        );
 
+    }
 
-    // Edit
+    // Edit button
+    const editButton =
+        card.querySelector(
+            ".edit-button"
+        );
 
-    card
-        .querySelector(".edit-button")
-        .addEventListener(
+    if (editButton) {
+
+        editButton.addEventListener(
             "click",
             () => openEditModal(task.id)
         );
 
+    }
 
-    // Delete
+    // Delete button
+    const deleteButton =
+        card.querySelector(
+            ".delete-button"
+        );
 
-    card
-        .querySelector(".delete-button")
-        .addEventListener(
+    if (deleteButton) {
+
+        deleteButton.addEventListener(
             "click",
             () => deleteTask(task.id)
         );
 
+    }
 
     return card;
 
 }
-
 
 // =========================================
 // CREATE TASK
@@ -561,10 +590,10 @@ async function createTask(event) {
 
     event.preventDefault();
 
-
     const title =
-        titleInput.value.trim();
-
+        titleInput
+            ? titleInput.value.trim()
+            : "";
 
     if (!title) {
 
@@ -577,37 +606,41 @@ async function createTask(event) {
 
     }
 
-
     const taskData = {
 
         title: title,
 
         description:
-            descriptionInput.value.trim(),
+            descriptionInput
+                ? descriptionInput.value.trim()
+                : "",
 
         priority:
-            priorityInput.value,
+            priorityInput
+                ? priorityInput.value
+                : "medium",
 
         category:
-            categoryInput.value,
+            categoryInput
+                ? categoryInput.value
+                : "Other",
 
         date:
-            dateInput.value
+            dateInput
+                ? dateInput.value
+                : ""
 
     };
-
 
     const button =
         document.getElementById(
             "addTaskButton"
         );
 
-
     setButtonLoading(
         button,
         true
     );
-
 
     try {
 
@@ -615,6 +648,7 @@ async function createTask(event) {
             await fetch(
                 `${API_URL}/tasks`,
                 {
+
                     method: "POST",
 
                     headers: {
@@ -623,10 +657,12 @@ async function createTask(event) {
                     },
 
                     body:
-                        JSON.stringify(taskData)
+                        JSON.stringify(
+                            taskData
+                        )
+
                 }
             );
-
 
         if (!response.ok) {
 
@@ -636,40 +672,40 @@ async function createTask(event) {
 
         }
 
+        if (taskForm) {
+            taskForm.reset();
+        }
 
-        taskForm.reset();
+        if (priorityInput) {
+            priorityInput.value =
+                "medium";
+        }
 
-
-        priorityInput.value =
-            "medium";
-
-
-        categoryInput.value =
-            "Other";
-
+        if (categoryInput) {
+            categoryInput.value =
+                "Other";
+        }
 
         showToast(
             "Task created successfully! 🎉",
             "success"
         );
 
-
         await loadTasks();
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(error);
+        console.error(
+            "Create task error:",
+            error
+        );
 
         showToast(
             "Could not create the task.",
             "error"
         );
 
-    }
-
-    finally {
+    } finally {
 
         setButtonLoading(
             button,
@@ -679,7 +715,6 @@ async function createTask(event) {
     }
 
 }
-
 
 // =========================================
 // TOGGLE TASK
@@ -697,7 +732,6 @@ async function toggleTask(taskId) {
                 }
             );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -706,10 +740,8 @@ async function toggleTask(taskId) {
 
         }
 
-
         const result =
             await response.json();
-
 
         if (result.completed) {
 
@@ -718,8 +750,7 @@ async function toggleTask(taskId) {
                 "success"
             );
 
-        }
-        else {
+        } else {
 
             showToast(
                 "Task moved back to pending.",
@@ -728,14 +759,14 @@ async function toggleTask(taskId) {
 
         }
 
-
         await loadTasks();
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(error);
+        console.error(
+            "Toggle task error:",
+            error
+        );
 
         showToast(
             "Could not update the task.",
@@ -745,7 +776,6 @@ async function toggleTask(taskId) {
     }
 
 }
-
 
 // =========================================
 // DELETE TASK
@@ -758,13 +788,9 @@ async function deleteTask(taskId) {
             "Are you sure you want to delete this task?"
         );
 
-
     if (!confirmed) {
-
         return;
-
     }
-
 
     try {
 
@@ -776,7 +802,6 @@ async function deleteTask(taskId) {
                 }
             );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -785,20 +810,19 @@ async function deleteTask(taskId) {
 
         }
 
-
         showToast(
             "Task deleted successfully.",
             "success"
         );
 
-
         await loadTasks();
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(error);
+        console.error(
+            "Delete task error:",
+            error
+        );
 
         showToast(
             "Could not delete the task.",
@@ -808,7 +832,6 @@ async function deleteTask(taskId) {
     }
 
 }
-
 
 // =========================================
 // OPEN EDIT MODAL
@@ -821,7 +844,6 @@ function openEditModal(taskId) {
             item => item.id === taskId
         );
 
-
     if (!task) {
 
         showToast(
@@ -833,51 +855,62 @@ function openEditModal(taskId) {
 
     }
 
-
     editingTaskId =
         taskId;
 
+    if (editTaskId) {
+        editTaskId.value =
+            task.id;
+    }
 
-    editTaskId.value =
-        task.id;
+    if (editTitle) {
+        editTitle.value =
+            task.title;
+    }
 
+    if (editDescription) {
+        editDescription.value =
+            task.description || "";
+    }
 
-    editTitle.value =
-        task.title;
+    if (editPriority) {
+        editPriority.value =
+            task.priority;
+    }
 
+    if (editCategory) {
+        editCategory.value =
+            task.category;
+    }
 
-    editDescription.value =
-        task.description || "";
+    if (editDate) {
+        editDate.value =
+            task.date || "";
+    }
 
+    if (editModal) {
 
-    editPriority.value =
-        task.priority;
+        editModal.classList.remove(
+            "hidden"
+        );
 
-
-    editCategory.value =
-        task.category;
-
-
-    editDate.value =
-        task.date || "";
-
-
-    editModal.classList.remove(
-        "hidden"
-    );
-
+    }
 
     document.body.style.overflow =
         "hidden";
 
-
     setTimeout(
-        () => editTitle.focus(),
+        () => {
+
+            if (editTitle) {
+                editTitle.focus();
+            }
+
+        },
         100
     );
 
 }
-
 
 // =========================================
 // CLOSE EDIT MODAL
@@ -885,20 +918,21 @@ function openEditModal(taskId) {
 
 function closeEditModal() {
 
-    editModal.classList.add(
-        "hidden"
-    );
+    if (editModal) {
 
+        editModal.classList.add(
+            "hidden"
+        );
+
+    }
 
     document.body.style.overflow =
         "";
-
 
     editingTaskId =
         null;
 
 }
-
 
 // =========================================
 // UPDATE TASK
@@ -908,33 +942,38 @@ async function updateTask(event) {
 
     event.preventDefault();
 
-
     if (!editingTaskId) {
-
         return;
-
     }
-
 
     const taskData = {
 
         title:
-            editTitle.value.trim(),
+            editTitle
+                ? editTitle.value.trim()
+                : "",
 
         description:
-            editDescription.value.trim(),
+            editDescription
+                ? editDescription.value.trim()
+                : "",
 
         priority:
-            editPriority.value,
+            editPriority
+                ? editPriority.value
+                : "medium",
 
         category:
-            editCategory.value,
+            editCategory
+                ? editCategory.value
+                : "Other",
 
         date:
-            editDate.value
+            editDate
+                ? editDate.value
+                : ""
 
     };
-
 
     if (!taskData.title) {
 
@@ -947,13 +986,13 @@ async function updateTask(event) {
 
     }
 
-
     try {
 
         const response =
             await fetch(
                 `${API_URL}/tasks/${editingTaskId}`,
                 {
+
                     method: "PUT",
 
                     headers: {
@@ -962,10 +1001,12 @@ async function updateTask(event) {
                     },
 
                     body:
-                        JSON.stringify(taskData)
+                        JSON.stringify(
+                            taskData
+                        )
+
                 }
             );
-
 
         if (!response.ok) {
 
@@ -975,23 +1016,21 @@ async function updateTask(event) {
 
         }
 
-
         closeEditModal();
-
 
         showToast(
             "Task updated successfully! ✨",
             "success"
         );
 
-
         await loadTasks();
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(error);
+        console.error(
+            "Update task error:",
+            error
+        );
 
         showToast(
             "Could not update the task.",
@@ -1002,7 +1041,6 @@ async function updateTask(event) {
 
 }
 
-
 // =========================================
 // PRODUCTIVITY VIEWS
 // =========================================
@@ -1012,9 +1050,10 @@ function setProductivityView(view) {
     currentView =
         view;
 
-
     document
-        .querySelectorAll(".productivity-card")
+        .querySelectorAll(
+            ".productivity-card"
+        )
         .forEach(card => {
 
             card.classList.toggle(
@@ -1024,22 +1063,21 @@ function setProductivityView(view) {
 
         });
 
-
     updateViewText();
 
     displayTasks();
 
 }
 
-
 function clearProductivityView() {
 
     currentView =
         "all";
 
-
     document
-        .querySelectorAll(".productivity-card")
+        .querySelectorAll(
+            ".productivity-card"
+        )
         .forEach(card => {
 
             card.classList.remove(
@@ -1048,22 +1086,17 @@ function clearProductivityView() {
 
         });
 
-
     updateViewText();
 
     displayTasks();
 
 }
 
-
 function matchesProductivityView(task) {
 
     if (currentView === "all") {
-
         return true;
-
     }
-
 
     if (currentView === "today") {
 
@@ -1071,21 +1104,20 @@ function matchesProductivityView(task) {
 
     }
 
-
     if (currentView === "upcoming") {
 
         return isUpcoming(task);
 
     }
 
-
     if (currentView === "overdue") {
 
-        return isOverdue(task) &&
-            !task.completed;
+        return (
+            isOverdue(task) &&
+            !task.completed
+        );
 
     }
-
 
     if (currentView === "completed") {
 
@@ -1093,11 +1125,9 @@ function matchesProductivityView(task) {
 
     }
 
-
     return true;
 
 }
-
 
 // =========================================
 // PRODUCTIVITY VIEW TEXT
@@ -1110,12 +1140,17 @@ function updateViewText() {
             "activeViewText"
         );
 
+    if (!element) {
+        return;
+    }
 
     const labels = {
 
-        all: "Showing all tasks",
+        all:
+            "Showing all tasks",
 
-        today: "Showing tasks due today",
+        today:
+            "Showing tasks due today",
 
         upcoming:
             "Showing upcoming tasks",
@@ -1128,13 +1163,11 @@ function updateViewText() {
 
     };
 
-
     element.textContent =
         labels[currentView] ||
         labels.all;
 
 }
-
 
 // =========================================
 // DATE HELPERS
@@ -1145,36 +1178,31 @@ function getTodayString() {
     const today =
         new Date();
 
-
     const year =
         today.getFullYear();
-
 
     const month =
         String(
             today.getMonth() + 1
         ).padStart(2, "0");
 
-
     const day =
         String(
             today.getDate()
         ).padStart(2, "0");
 
-
     return `${year}-${month}-${day}`;
 
 }
 
-
 function isDueToday(task) {
 
     return (
-        task.date === getTodayString()
+        task.date ===
+        getTodayString()
     );
 
 }
-
 
 function isUpcoming(task) {
 
@@ -1187,29 +1215,25 @@ function isUpcoming(task) {
 
     }
 
-
     return (
-        task.date > getTodayString()
+        task.date >
+        getTodayString()
     );
 
 }
-
 
 function isOverdue(task) {
 
     if (!task.date) {
-
         return false;
-
     }
 
-
     return (
-        task.date < getTodayString()
+        task.date <
+        getTodayString()
     );
 
 }
-
 
 function getDueStatus(task) {
 
@@ -1226,7 +1250,6 @@ function getDueStatus(task) {
 
     }
 
-
     if (isOverdue(task)) {
 
         return {
@@ -1239,7 +1262,6 @@ function getDueStatus(task) {
         };
 
     }
-
 
     if (isDueToday(task)) {
 
@@ -1254,7 +1276,6 @@ function getDueStatus(task) {
 
     }
 
-
     return {
 
         text: "Pending",
@@ -1266,7 +1287,6 @@ function getDueStatus(task) {
 
 }
 
-
 // =========================================
 // DATE FORMAT
 // =========================================
@@ -1274,29 +1294,28 @@ function getDueStatus(task) {
 function formatDate(dateString) {
 
     if (!dateString) {
-
         return "No due date";
-
     }
-
 
     const date =
         new Date(
             `${dateString}T00:00:00`
         );
 
-
     return date.toLocaleDateString(
         "en-IN",
         {
+
             day: "2-digit",
+
             month: "short",
+
             year: "numeric"
+
         }
     );
 
 }
-
 
 // =========================================
 // STATS
@@ -1307,47 +1326,65 @@ function updateStats() {
     const total =
         tasks.length;
 
-
     const completed =
         tasks.filter(
             task => task.completed
         ).length;
 
-
     const pending =
         total - completed;
-
 
     const completionRate =
         total === 0
             ? 0
             : Math.round(
-                (completed / total) * 100
+                (
+                    completed /
+                    total
+                ) * 100
             );
 
+    const totalElement =
+        document.getElementById(
+            "totalTasks"
+        );
 
-    document.getElementById(
-        "totalTasks"
-    ).textContent = total;
+    const pendingElement =
+        document.getElementById(
+            "pendingTasks"
+        );
 
+    const completedElement =
+        document.getElementById(
+            "completedTasks"
+        );
 
-    document.getElementById(
-        "pendingTasks"
-    ).textContent = pending;
+    const rateElement =
+        document.getElementById(
+            "completionRate"
+        );
 
+    if (totalElement) {
+        totalElement.textContent =
+            total;
+    }
 
-    document.getElementById(
-        "completedTasks"
-    ).textContent = completed;
+    if (pendingElement) {
+        pendingElement.textContent =
+            pending;
+    }
 
+    if (completedElement) {
+        completedElement.textContent =
+            completed;
+    }
 
-    document.getElementById(
-        "completionRate"
-    ).textContent =
-        `${completionRate}%`;
+    if (rateElement) {
+        rateElement.textContent =
+            `${completionRate}%`;
+    }
 
 }
-
 
 // =========================================
 // PRODUCTIVITY CARDS
@@ -1362,13 +1399,11 @@ function updateProductivityCards() {
                 !task.completed
         ).length;
 
-
     const upcoming =
         tasks.filter(
             task =>
                 isUpcoming(task)
         ).length;
-
 
     const overdue =
         tasks.filter(
@@ -1377,35 +1412,53 @@ function updateProductivityCards() {
                 !task.completed
         ).length;
 
-
     const completed =
         tasks.filter(
             task =>
                 task.completed
         ).length;
 
+    const todayElement =
+        document.getElementById(
+            "todayCount"
+        );
 
-    document.getElementById(
-        "todayCount"
-    ).textContent = today;
+    const upcomingElement =
+        document.getElementById(
+            "upcomingCount"
+        );
 
+    const overdueElement =
+        document.getElementById(
+            "overdueCount"
+        );
 
-    document.getElementById(
-        "upcomingCount"
-    ).textContent = upcoming;
+    const completedElement =
+        document.getElementById(
+            "dashboardCompletedCount"
+        );
 
+    if (todayElement) {
+        todayElement.textContent =
+            today;
+    }
 
-    document.getElementById(
-        "overdueCount"
-    ).textContent = overdue;
+    if (upcomingElement) {
+        upcomingElement.textContent =
+            upcoming;
+    }
 
+    if (overdueElement) {
+        overdueElement.textContent =
+            overdue;
+    }
 
-    document.getElementById(
-        "dashboardCompletedCount"
-    ).textContent = completed;
+    if (completedElement) {
+        completedElement.textContent =
+            completed;
+    }
 
 }
-
 
 // =========================================
 // ANALYTICS
@@ -1419,13 +1472,11 @@ function updateAnalytics() {
                 task.priority === "high"
         ).length;
 
-
     const medium =
         tasks.filter(
             task =>
                 task.priority === "medium"
         ).length;
-
 
     const low =
         tasks.filter(
@@ -1433,44 +1484,63 @@ function updateAnalytics() {
                 task.priority === "low"
         ).length;
 
-
     const completed =
         tasks.filter(
             task =>
                 task.completed
         ).length;
 
-
     const rate =
         tasks.length === 0
             ? 0
             : Math.round(
-                (completed / tasks.length) * 100
+                (
+                    completed /
+                    tasks.length
+                ) * 100
             );
 
+    const highElement =
+        document.getElementById(
+            "highPriorityCount"
+        );
 
-    document.getElementById(
-        "highPriorityCount"
-    ).textContent = high;
+    const mediumElement =
+        document.getElementById(
+            "mediumPriorityCount"
+        );
 
+    const lowElement =
+        document.getElementById(
+            "lowPriorityCount"
+        );
 
-    document.getElementById(
-        "mediumPriorityCount"
-    ).textContent = medium;
+    const rateElement =
+        document.getElementById(
+            "analyticsCompletionRate"
+        );
 
+    if (highElement) {
+        highElement.textContent =
+            high;
+    }
 
-    document.getElementById(
-        "lowPriorityCount"
-    ).textContent = low;
+    if (mediumElement) {
+        mediumElement.textContent =
+            medium;
+    }
 
+    if (lowElement) {
+        lowElement.textContent =
+            low;
+    }
 
-    document.getElementById(
-        "analyticsCompletionRate"
-    ).textContent =
-        `${rate}%`;
+    if (rateElement) {
+        rateElement.textContent =
+            `${rate}%`;
+    }
 
 }
-
 
 // =========================================
 // TASK COUNT
@@ -1483,13 +1553,17 @@ function updateTaskCountText(count) {
             ? "1 task"
             : `${count} tasks`;
 
+    const element =
+        document.getElementById(
+            "taskCountText"
+        );
 
-    document.getElementById(
-        "taskCountText"
-    ).textContent = text;
+    if (element) {
+        element.textContent =
+            text;
+    }
 
 }
-
 
 // =========================================
 // EMPTY STATE
@@ -1497,65 +1571,97 @@ function updateTaskCountText(count) {
 
 function showEmptyState() {
 
+    if (!emptyState) {
+        return;
+    }
+
     emptyState.classList.remove(
         "hidden"
     );
-
 
     if (
         currentView !== "all"
     ) {
 
-        emptyTitle.textContent =
-            "No tasks in this view";
+        if (emptyTitle) {
 
+            emptyTitle.textContent =
+                "No tasks in this view";
 
-        emptyDescription.textContent =
-            "Try another productivity view or clear the current filter.";
+        }
+
+        if (emptyDescription) {
+
+            emptyDescription.textContent =
+                "Try another productivity view or clear the current filter.";
+
+        }
 
         return;
 
     }
 
-
     const hasFilters =
-        searchInput.value.trim() !== "" ||
-        priorityFilter.value !== "all" ||
-        categoryFilter.value !== "all";
-
+        (
+            searchInput &&
+            searchInput.value.trim() !== ""
+        ) ||
+        (
+            priorityFilter &&
+            priorityFilter.value !== "all"
+        ) ||
+        (
+            categoryFilter &&
+            categoryFilter.value !== "all"
+        );
 
     if (hasFilters) {
 
-        emptyTitle.textContent =
-            "No matching tasks";
+        if (emptyTitle) {
 
+            emptyTitle.textContent =
+                "No matching tasks";
 
-        emptyDescription.textContent =
-            "Try changing your search or filters.";
+        }
 
-    }
-    else {
+        if (emptyDescription) {
 
-        emptyTitle.textContent =
-            "No tasks yet";
+            emptyDescription.textContent =
+                "Try changing your search or filters.";
 
+        }
 
-        emptyDescription.textContent =
-            "Create your first task and start making progress.";
+    } else {
+
+        if (emptyTitle) {
+
+            emptyTitle.textContent =
+                "No tasks yet";
+
+        }
+
+        if (emptyDescription) {
+
+            emptyDescription.textContent =
+                "Create your first task and start making progress.";
+
+        }
 
     }
 
 }
-
 
 function hideEmptyState() {
 
-    emptyState.classList.add(
-        "hidden"
-    );
+    if (emptyState) {
+
+        emptyState.classList.add(
+            "hidden"
+        );
+
+    }
 
 }
-
 
 // =========================================
 // AI DAILY PLAN
@@ -1568,12 +1674,10 @@ async function generateAIPlan() {
             "generatePlanButton"
         );
 
-
     setButtonLoading(
         button,
         true
     );
-
 
     try {
 
@@ -1585,7 +1689,6 @@ async function generateAIPlan() {
                 }
             );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -1594,33 +1697,29 @@ async function generateAIPlan() {
 
         }
 
-
         const data =
             await response.json();
 
-
         displayAIPlan(data);
-
 
         showToast(
             "Daily plan generated! 🤖",
             "success"
         );
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(error);
+        console.error(
+            "AI plan error:",
+            error
+        );
 
         showToast(
             "Could not generate the daily plan.",
             "error"
         );
 
-    }
-
-    finally {
+    } finally {
 
         setButtonLoading(
             button,
@@ -1631,17 +1730,19 @@ async function generateAIPlan() {
 
 }
 
-
 // =========================================
 // DISPLAY AI PLAN
 // =========================================
 
 function displayAIPlan(data) {
 
+    if (!aiPlan) {
+        return;
+    }
+
     aiPlan.classList.remove(
         "hidden"
     );
-
 
     if (
         !data.plan ||
@@ -1665,59 +1766,56 @@ function displayAIPlan(data) {
 
     }
 
-
     let html = "";
 
+    data.plan.forEach(item => {
 
-    data.plan.forEach(
-        item => {
+        html += `
 
-            html += `
+            <div class="plan-item">
 
-                <div class="plan-item">
+                <div class="plan-time">
+                    ${escapeHTML(item.time)}
+                </div>
 
-                    <div class="plan-time">
-                        ${escapeHTML(item.time)}
-                    </div>
+                <div class="plan-title">
+                    ${escapeHTML(item.title)}
+                </div>
 
-                    <div class="plan-title">
-                        ${escapeHTML(item.title)}
-                    </div>
+                <div class="plan-description">
 
-                    <div class="plan-description">
+                    ${escapeHTML(
+                        item.description ||
+                        "Focus on completing this task."
+                    )}
 
-                        ${
-                            escapeHTML(
-                                item.description ||
-                                "Focus on completing this task."
-                            )
-                        }
+                    <br>
 
-                        <br>
+                    <strong>
+                        Priority:
+                    </strong>
 
-                        <strong>
-                            Priority:
-                        </strong>
+                    ${escapeHTML(
+                        item.priority
+                    )}
 
-                        ${escapeHTML(item.priority)}
+                    &nbsp; • &nbsp;
 
-                        &nbsp; • &nbsp;
+                    <strong>
+                        Category:
+                    </strong>
 
-                        <strong>
-                            Category:
-                        </strong>
-
-                        ${escapeHTML(item.category)}
-
-                    </div>
+                    ${escapeHTML(
+                        item.category
+                    )}
 
                 </div>
 
-            `;
+            </div>
 
-        }
-    );
+        `;
 
+    });
 
     if (data.suggestion) {
 
@@ -1736,12 +1834,10 @@ function displayAIPlan(data) {
 
     }
 
-
     aiPlan.innerHTML =
         html;
 
 }
-
 
 // =========================================
 // TOAST NOTIFICATIONS
@@ -1752,13 +1848,17 @@ function showToast(
     type = "success"
 ) {
 
-    const toast =
-        document.createElement("div");
+    if (!toastContainer) {
+        return;
+    }
 
+    const toast =
+        document.createElement(
+            "div"
+        );
 
     toast.className =
         `toast ${type}`;
-
 
     const icons = {
 
@@ -1772,7 +1872,6 @@ function showToast(
 
     };
 
-
     toast.innerHTML = `
 
         <span>
@@ -1785,11 +1884,9 @@ function showToast(
 
     `;
 
-
     toastContainer.appendChild(
         toast
     );
-
 
     setTimeout(
         () => {
@@ -1797,7 +1894,6 @@ function showToast(
             toast.classList.add(
                 "hide"
             );
-
 
             setTimeout(
                 () => toast.remove(),
@@ -1810,7 +1906,6 @@ function showToast(
 
 }
 
-
 // =========================================
 // BUTTON LOADING
 // =========================================
@@ -1821,24 +1916,22 @@ function setButtonLoading(
 ) {
 
     if (!button) {
-
         return;
-
     }
-
 
     if (loading) {
 
-        button.disabled = true;
+        button.disabled =
+            true;
 
         button.classList.add(
             "loading"
         );
 
-    }
-    else {
+    } else {
 
-        button.disabled = false;
+        button.disabled =
+            false;
 
         button.classList.remove(
             "loading"
@@ -1847,7 +1940,6 @@ function setButtonLoading(
     }
 
 }
-
 
 // =========================================
 // DARK MODE
@@ -1859,12 +1951,10 @@ function toggleDarkMode() {
         "dark"
     );
 
-
     const darkModeEnabled =
         document.body.classList.contains(
             "dark"
         );
-
 
     localStorage.setItem(
         "taskflowDarkMode",
@@ -1873,11 +1963,9 @@ function toggleDarkMode() {
             : "disabled"
     );
 
-
     updateDarkModeIcon();
 
 }
-
 
 function loadDarkMode() {
 
@@ -1886,8 +1974,9 @@ function loadDarkMode() {
             "taskflowDarkMode"
         );
 
-
-    if (savedMode === "enabled") {
+    if (
+        savedMode === "enabled"
+    ) {
 
         document.body.classList.add(
             "dark"
@@ -1895,11 +1984,9 @@ function loadDarkMode() {
 
     }
 
-
     updateDarkModeIcon();
 
 }
-
 
 function updateDarkModeIcon() {
 
@@ -1908,18 +1995,21 @@ function updateDarkModeIcon() {
             "darkModeButton"
         );
 
+    if (!button) {
+        return;
+    }
 
     const dark =
         document.body.classList.contains(
             "dark"
         );
 
-
     button.textContent =
-        dark ? "☀️" : "🌙";
+        dark
+            ? "☀️"
+            : "🌙";
 
 }
-
 
 // =========================================
 // PAGE LOADER
@@ -1932,6 +2022,9 @@ function hidePageLoader() {
             "pageLoader"
         );
 
+    if (!loader) {
+        return;
+    }
 
     setTimeout(
         () => {
@@ -1946,7 +2039,6 @@ function hidePageLoader() {
 
 }
 
-
 // =========================================
 // CAPITALIZE
 // =========================================
@@ -1954,11 +2046,8 @@ function hidePageLoader() {
 function capitalize(text) {
 
     if (!text) {
-
         return "";
-
     }
-
 
     return (
         text.charAt(0).toUpperCase() +
@@ -1967,38 +2056,43 @@ function capitalize(text) {
 
 }
 
-
 // =========================================
 // HTML SECURITY
 // =========================================
 
 function escapeHTML(value) {
 
-    if (value === null ||
-        value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
 
         return "";
 
     }
 
-
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
