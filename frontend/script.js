@@ -1,157 +1,551 @@
-// =========================================
-// TASKFLOW AI - FRONTEND JAVASCRIPT
-// =========================================
+// ============================================================
+// TASKFLOW AI
+// COMPLETE FRONTEND
+// Authentication + JWT + Tasks + Dashboard + Analytics + AI
+// ============================================================
 
 const API_URL = "/api";
 
-// =========================================
+const TOKEN_KEY = "taskflow_token";
+const USER_KEY = "taskflow_user";
+
+
+// ============================================================
 // GLOBAL STATE
-// =========================================
+// ============================================================
 
-let tasks = [];
+let allTasks = [];
+let filteredTasks = [];
+
+let currentEditTaskId = null;
+
 let currentView = "all";
-let editingTaskId = null;
 
-// =========================================
-// DOM ELEMENTS
-// =========================================
 
-const taskForm = document.getElementById("taskForm");
-const titleInput = document.getElementById("title");
-const descriptionInput = document.getElementById("description");
-const priorityInput = document.getElementById("priority");
-const categoryInput = document.getElementById("category");
-const dateInput = document.getElementById("date");
+// ============================================================
+// AUTHENTICATION STORAGE
+// ============================================================
 
-const taskList = document.getElementById("taskList");
-const emptyState = document.getElementById("emptyState");
-const emptyTitle = document.getElementById("emptyTitle");
-const emptyDescription = document.getElementById("emptyDescription");
+function getToken() {
 
-const searchInput = document.getElementById("searchInput");
-const priorityFilter = document.getElementById("priorityFilter");
-const categoryFilter = document.getElementById("categoryFilter");
+    return localStorage.getItem(
+        TOKEN_KEY
+    );
+}
 
-const editModal = document.getElementById("editModal");
-const editTaskForm = document.getElementById("editTaskForm");
 
-const editTaskId = document.getElementById("editTaskId");
-const editTitle = document.getElementById("editTitle");
-const editDescription = document.getElementById("editDescription");
-const editPriority = document.getElementById("editPriority");
-const editCategory = document.getElementById("editCategory");
-const editDate = document.getElementById("editDate");
+function getSavedUser() {
 
-const toastContainer = document.getElementById("toastContainer");
-const aiPlan = document.getElementById("aiPlan");
+    try {
 
-// =========================================
+        return JSON.parse(
+            localStorage.getItem(USER_KEY)
+        );
+
+    } catch {
+
+        return null;
+    }
+}
+
+
+function saveSession(
+    token,
+    user = null
+) {
+
+    localStorage.setItem(
+        TOKEN_KEY,
+        token
+    );
+
+    if (user) {
+
+        localStorage.setItem(
+            USER_KEY,
+            JSON.stringify(user)
+        );
+    }
+}
+
+
+function clearSession() {
+
+    localStorage.removeItem(
+        TOKEN_KEY
+    );
+
+    localStorage.removeItem(
+        USER_KEY
+    );
+}
+
+
+// ============================================================
 // PAGE INITIALIZATION
-// =========================================
+// ============================================================
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        initializeApplication();
+
+    }
+);
+
+
+async function initializeApplication() {
 
     try {
 
         setupEventListeners();
 
-        loadDarkMode();
+        setupDarkMode();
 
-        await loadTasks();
+        const token = getToken();
+
+        if (!token) {
+
+            showAuthScreen();
+
+            showLoginPanel();
+
+            return;
+        }
+
+        const user =
+            await getCurrentUser();
+
+        if (user) {
+
+            saveSession(
+                token,
+                user
+            );
+
+            showDashboard(user);
+
+            await loadTasks();
+
+        } else {
+
+            clearSession();
+
+            showAuthScreen();
+
+            showLoginPanel();
+        }
 
     } catch (error) {
 
-        console.error("Initialization error:", error);
+        console.error(
+            "Initialization error:",
+            error
+        );
+
+        clearSession();
+
+        showAuthScreen();
+
+        showLoginPanel();
 
     } finally {
 
         hidePageLoader();
+    }
+}
 
+
+// ============================================================
+// API HELPER
+// ============================================================
+
+async function apiFetch(
+    endpoint,
+    options = {},
+    requiresAuth = true
+) {
+
+    const headers = {
+        ...(options.headers || {})
+    };
+
+
+    if (
+        options.body &&
+        !(options.body instanceof FormData)
+    ) {
+
+        headers["Content-Type"] =
+            "application/json";
     }
 
-});
 
-// =========================================
+    if (requiresAuth) {
+
+        const token = getToken();
+
+        if (!token) {
+
+            handleSessionExpired();
+
+            throw new Error(
+                "You are not logged in."
+            );
+        }
+
+        headers["Authorization"] =
+            `Bearer ${token}`;
+    }
+
+
+    const response = await fetch(
+        `${API_URL}${endpoint}`,
+        {
+            ...options,
+            headers
+        }
+    );
+
+
+    if (
+        response.status === 401 &&
+        requiresAuth
+    ) {
+
+        handleSessionExpired();
+
+        throw new Error(
+            "Your session has expired. Please login again."
+        );
+    }
+
+
+    let data = null;
+
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    if (
+        contentType.includes(
+            "application/json"
+        )
+    ) {
+
+        data = await response.json();
+
+    } else {
+
+        const text =
+            await response.text();
+
+        try {
+
+            data = JSON.parse(text);
+
+        } catch {
+
+            data = {
+                detail: text
+            };
+        }
+    }
+
+
+    if (!response.ok) {
+
+        let message =
+            "Something went wrong.";
+
+
+        if (data) {
+
+            if (
+                typeof data.detail ===
+                "string"
+            ) {
+
+                message =
+                    data.detail;
+
+            } else if (
+                data.message
+            ) {
+
+                message =
+                    data.message;
+            }
+        }
+
+
+        throw new Error(message);
+    }
+
+
+    return data;
+}
+
+
+// ============================================================
+// CURRENT USER
+// ============================================================
+
+async function getCurrentUser() {
+
+    try {
+
+        return await apiFetch(
+            "/auth/me",
+            {
+                method: "GET"
+            },
+            true
+        );
+
+    } catch (error) {
+
+        console.error(
+            "getCurrentUser:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+// ============================================================
+// AUTH SCREEN
+// ============================================================
+
+function showAuthScreen() {
+
+    const authScreen =
+        document.getElementById(
+            "authScreen"
+        );
+
+    const app =
+        document.getElementById(
+            "app"
+        );
+
+
+    if (authScreen) {
+
+        authScreen.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    if (app) {
+
+        app.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+function showDashboard(user) {
+
+    const authScreen =
+        document.getElementById(
+            "authScreen"
+        );
+
+    const app =
+        document.getElementById(
+            "app"
+        );
+
+
+    if (authScreen) {
+
+        authScreen.classList.add(
+            "hidden"
+        );
+    }
+
+
+    if (app) {
+
+        app.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    updateUserInformation(user);
+}
+
+
+function showLoginPanel() {
+
+    const loginPanel =
+        document.getElementById(
+            "loginPanel"
+        );
+
+    const signupPanel =
+        document.getElementById(
+            "signupPanel"
+        );
+
+
+    if (loginPanel) {
+
+        loginPanel.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    if (signupPanel) {
+
+        signupPanel.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+function showSignupPanel() {
+
+    const loginPanel =
+        document.getElementById(
+            "loginPanel"
+        );
+
+    const signupPanel =
+        document.getElementById(
+            "signupPanel"
+        );
+
+
+    if (loginPanel) {
+
+        loginPanel.classList.add(
+            "hidden"
+        );
+    }
+
+
+    if (signupPanel) {
+
+        signupPanel.classList.remove(
+            "hidden"
+        );
+    }
+}
+
+
+// ============================================================
 // EVENT LISTENERS
-// =========================================
+// ============================================================
 
 function setupEventListeners() {
 
-    // Add task
-    if (taskForm) {
-        taskForm.addEventListener(
-            "submit",
-            createTask
-        );
-    }
 
-    // Edit task
-    if (editTaskForm) {
-        editTaskForm.addEventListener(
-            "submit",
-            updateTask
-        );
-    }
+    // LOGIN
 
-    // Search
-    if (searchInput) {
-        searchInput.addEventListener(
-            "input",
-            displayTasks
-        );
-    }
-
-    // Priority filter
-    if (priorityFilter) {
-        priorityFilter.addEventListener(
-            "change",
-            displayTasks
-        );
-    }
-
-    // Category filter
-    if (categoryFilter) {
-        categoryFilter.addEventListener(
-            "change",
-            displayTasks
-        );
-    }
-
-    // Productivity cards
-    document
-        .querySelectorAll(".productivity-card")
-        .forEach(card => {
-
-            card.addEventListener(
-                "click",
-                () => {
-
-                    const view =
-                        card.dataset.view;
-
-                    setProductivityView(view);
-
-                }
-            );
-
-        });
-
-    // Clear productivity view
-    const clearViewButton =
+    const loginForm =
         document.getElementById(
-            "clearViewButton"
+            "loginForm"
         );
 
-    if (clearViewButton) {
+    if (loginForm) {
 
-        clearViewButton.addEventListener(
-            "click",
-            clearProductivityView
+        loginForm.addEventListener(
+            "submit",
+            handleLogin
         );
-
     }
 
-    // Dark mode
+
+    // SIGNUP
+
+    const signupForm =
+        document.getElementById(
+            "signupForm"
+        );
+
+    if (signupForm) {
+
+        signupForm.addEventListener(
+            "submit",
+            handleSignup
+        );
+    }
+
+
+    // SHOW SIGNUP
+
+    const showSignupButton =
+        document.getElementById(
+            "showSignupButton"
+        );
+
+    if (showSignupButton) {
+
+        showSignupButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+
+                showSignupPanel();
+
+            }
+        );
+    }
+
+
+    // SHOW LOGIN
+
+    const showLoginButton =
+        document.getElementById(
+            "showLoginButton"
+        );
+
+    if (showLoginButton) {
+
+        showLoginButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+
+                showLoginPanel();
+
+            }
+        );
+    }
+
+
+    // LOGOUT
+
+    const logoutButton =
+        document.getElementById(
+            "logoutButton"
+        );
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            handleLogout
+        );
+    }
+
+
+    // DARK MODE
+
     const darkModeButton =
         document.getElementById(
             "darkModeButton"
@@ -163,10 +557,75 @@ function setupEventListeners() {
             "click",
             toggleDarkMode
         );
-
     }
 
-    // AI daily plan
+
+    // TASK FORM
+
+    const taskForm =
+        document.getElementById(
+            "taskForm"
+        );
+
+    if (taskForm) {
+
+        taskForm.addEventListener(
+            "submit",
+            handleCreateTask
+        );
+    }
+
+
+    // SEARCH
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            applyFilters
+        );
+    }
+
+
+    // PRIORITY FILTER
+
+    const priorityFilter =
+        document.getElementById(
+            "priorityFilter"
+        );
+
+    if (priorityFilter) {
+
+        priorityFilter.addEventListener(
+            "change",
+            applyFilters
+        );
+    }
+
+
+    // CATEGORY FILTER
+
+    const categoryFilter =
+        document.getElementById(
+            "categoryFilter"
+        );
+
+    if (categoryFilter) {
+
+        categoryFilter.addEventListener(
+            "change",
+            applyFilters
+        );
+    }
+
+
+    // AI PLAN
+
     const generatePlanButton =
         document.getElementById(
             "generatePlanButton"
@@ -178,10 +637,11 @@ function setupEventListeners() {
             "click",
             generateAIPlan
         );
-
     }
 
-    // Close modal
+
+    // CLOSE MODAL
+
     const closeModalButton =
         document.getElementById(
             "closeModalButton"
@@ -193,10 +653,11 @@ function setupEventListeners() {
             "click",
             closeEditModal
         );
-
     }
 
-    // Cancel edit
+
+    // CANCEL EDIT
+
     const cancelEditButton =
         document.getElementById(
             "cancelEditButton"
@@ -208,405 +669,753 @@ function setupEventListeners() {
             "click",
             closeEditModal
         );
-
     }
 
-    // Modal overlay
-    const modalOverlay =
-        document.querySelector(
-            ".modal-overlay"
+
+    // EDIT FORM
+
+    const editTaskForm =
+        document.getElementById(
+            "editTaskForm"
         );
 
-    if (modalOverlay) {
+    if (editTaskForm) {
 
-        modalOverlay.addEventListener(
-            "click",
-            event => {
+        editTaskForm.addEventListener(
+            "submit",
+            handleEditTask
+        );
+    }
 
-                if (
-                    event.target ===
-                    modalOverlay
-                ) {
 
-                    closeEditModal();
+    // PRODUCTIVITY CARDS
 
+    document
+        .querySelectorAll(
+            "[data-view]"
+        )
+        .forEach(card => {
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    const view =
+                        card.getAttribute(
+                            "data-view"
+                        );
+
+                    setProductivityView(
+                        view
+                    );
                 }
+            );
+        });
+
+
+    // CLEAR VIEW
+
+    const clearViewButton =
+        document.getElementById(
+            "clearViewButton"
+        );
+
+    if (clearViewButton) {
+
+        clearViewButton.addEventListener(
+            "click",
+            () => {
+
+                currentView =
+                    "all";
+
+                applyFilters();
 
             }
         );
-
     }
 
-    // Escape key
-    document.addEventListener(
-        "keydown",
-        event => {
 
-            if (
-                event.key === "Escape" &&
-                editModal &&
-                !editModal.classList.contains(
-                    "hidden"
-                )
-            ) {
+    // PASSWORD TOGGLES
 
-                closeEditModal();
-
-            }
-
-        }
-    );
-
+    setupPasswordToggles();
 }
 
-// =========================================
+
+// ============================================================
+// PASSWORD TOGGLES
+// ============================================================
+
+function setupPasswordToggles() {
+
+    document
+        .querySelectorAll(
+            "[data-target]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const targetId =
+                        button.getAttribute(
+                            "data-target"
+                        );
+
+                    const input =
+                        document.getElementById(
+                            targetId
+                        );
+
+                    if (!input) {
+                        return;
+                    }
+
+
+                    if (
+                        input.type ===
+                        "password"
+                    ) {
+
+                        input.type =
+                            "text";
+
+                    } else {
+
+                        input.type =
+                            "password";
+                    }
+                }
+            );
+        });
+}
+
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+async function handleLogin(event) {
+
+    event.preventDefault();
+
+
+    const emailInput =
+        document.getElementById(
+            "loginEmail"
+        );
+
+    const passwordInput =
+        document.getElementById(
+            "loginPassword"
+        );
+
+    const loginButton =
+        document.getElementById(
+            "loginButton"
+        );
+
+    const loginError =
+        document.getElementById(
+            "loginError"
+        );
+
+
+    if (
+        !emailInput ||
+        !passwordInput
+    ) {
+
+        showToast(
+            "Login form not found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const email =
+        emailInput.value
+            .trim()
+            .toLowerCase();
+
+    const password =
+        passwordInput.value;
+
+
+    if (!email || !password) {
+
+        showError(
+            loginError,
+            "Please enter email and password."
+        );
+
+        return;
+    }
+
+
+    clearError(loginError);
+
+
+    if (loginButton) {
+
+        loginButton.disabled =
+            true;
+
+        loginButton.textContent =
+            "Logging in...";
+    }
+
+
+    try {
+
+        const response =
+            await apiFetch(
+                "/auth/login",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                },
+                false
+            );
+
+
+        const token =
+            response.access_token;
+
+
+        if (!token) {
+
+            throw new Error(
+                "Login succeeded but no token was returned."
+            );
+        }
+
+
+        saveSession(
+            token,
+            response.user
+        );
+
+
+        const user =
+            await getCurrentUser();
+
+
+        if (!user) {
+
+            clearSession();
+
+            throw new Error(
+                "Unable to verify login session."
+            );
+        }
+
+
+        saveSession(
+            token,
+            user
+        );
+
+
+        showDashboard(user);
+
+
+        showToast(
+            "Login successful! Welcome back.",
+            "success"
+        );
+
+
+        await loadTasks();
+
+
+        const form =
+            document.getElementById(
+                "loginForm"
+            );
+
+        if (form) {
+
+            form.reset();
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "LOGIN ERROR:",
+            error
+        );
+
+
+        showError(
+            loginError,
+            error.message
+        );
+
+
+        showToast(
+            error.message ||
+            "Unable to login.",
+            "error"
+        );
+
+
+    } finally {
+
+        if (loginButton) {
+
+            loginButton.disabled =
+                false;
+
+            loginButton.textContent =
+                "Login";
+        }
+    }
+}
+
+
+// ============================================================
+// SIGNUP
+// ============================================================
+
+async function handleSignup(event) {
+
+    event.preventDefault();
+
+
+    const usernameInput =
+        document.getElementById(
+            "signupUsername"
+        );
+
+    const emailInput =
+        document.getElementById(
+            "signupEmail"
+        );
+
+    const passwordInput =
+        document.getElementById(
+            "signupPassword"
+        );
+
+    const signupButton =
+        document.getElementById(
+            "signupButton"
+        );
+
+    const signupError =
+        document.getElementById(
+            "signupError"
+        );
+
+
+    if (
+        !usernameInput ||
+        !emailInput ||
+        !passwordInput
+    ) {
+
+        showToast(
+            "Signup form not found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const username =
+        usernameInput.value.trim();
+
+    const email =
+        emailInput.value
+            .trim()
+            .toLowerCase();
+
+    const password =
+        passwordInput.value;
+
+
+    if (
+        !username ||
+        !email ||
+        !password
+    ) {
+
+        showError(
+            signupError,
+            "Please fill all fields."
+        );
+
+        return;
+    }
+
+
+    if (username.length < 3) {
+
+        showError(
+            signupError,
+            "Username must contain at least 3 characters."
+        );
+
+        return;
+    }
+
+
+    if (password.length < 6) {
+
+        showError(
+            signupError,
+            "Password must contain at least 6 characters."
+        );
+
+        return;
+    }
+
+
+    if (
+        new TextEncoder()
+            .encode(password)
+            .length > 72
+    ) {
+
+        showError(
+            signupError,
+            "Password must be 72 bytes or fewer."
+        );
+
+        return;
+    }
+
+
+    clearError(signupError);
+
+
+    if (signupButton) {
+
+        signupButton.disabled =
+            true;
+
+        signupButton.textContent =
+            "Creating account...";
+    }
+
+
+    try {
+
+        const response =
+            await apiFetch(
+                "/auth/signup",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        username:
+                            username,
+                        email:
+                            email,
+                        password:
+                            password
+                    })
+                },
+                false
+            );
+
+
+        console.log(
+            "SIGNUP RESPONSE:",
+            response
+        );
+
+
+        showToast(
+            "Account created successfully! Please login.",
+            "success"
+        );
+
+
+        const form =
+            document.getElementById(
+                "signupForm"
+            );
+
+        if (form) {
+
+            form.reset();
+        }
+
+
+        showLoginPanel();
+
+
+        const loginEmail =
+            document.getElementById(
+                "loginEmail"
+            );
+
+        if (loginEmail) {
+
+            loginEmail.value =
+                email;
+        }
+
+
+        const loginPassword =
+            document.getElementById(
+                "loginPassword"
+            );
+
+        if (loginPassword) {
+
+            loginPassword.focus();
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "SIGNUP ERROR:",
+            error
+        );
+
+
+        showError(
+            signupError,
+            error.message
+        );
+
+
+        showToast(
+            error.message ||
+            "Unable to create account.",
+            "error"
+        );
+
+
+    } finally {
+
+        if (signupButton) {
+
+            signupButton.disabled =
+                false;
+
+            signupButton.textContent =
+                "Create Account";
+        }
+    }
+}
+
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+function handleLogout() {
+
+    clearSession();
+
+    allTasks = [];
+
+    filteredTasks = [];
+
+    currentView = "all";
+
+    showAuthScreen();
+
+    showLoginPanel();
+
+    showToast(
+        "You have been logged out.",
+        "success"
+    );
+}
+
+
+// ============================================================
+// SESSION EXPIRED
+// ============================================================
+
+function handleSessionExpired() {
+
+    clearSession();
+
+    allTasks = [];
+
+    filteredTasks = [];
+
+    currentView = "all";
+
+    showAuthScreen();
+
+    showLoginPanel();
+}
+
+
+// ============================================================
+// USER INFORMATION
+// ============================================================
+
+function updateUserInformation(user) {
+
+    if (!user) {
+        return;
+    }
+
+
+    const username =
+        user.username ||
+        user.email ||
+        "User";
+
+
+    const usernameDisplay =
+        document.getElementById(
+            "usernameDisplay"
+        );
+
+    if (usernameDisplay) {
+
+        usernameDisplay.textContent =
+            username;
+    }
+
+
+    const userInitial =
+        document.getElementById(
+            "userInitial"
+        );
+
+    if (userInitial) {
+
+        userInitial.textContent =
+            username
+                .charAt(0)
+                .toUpperCase();
+    }
+}
+
+
+// ============================================================
 // LOAD TASKS
-// =========================================
+// ============================================================
 
 async function loadTasks() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/tasks`
+        const tasks =
+            await apiFetch(
+                "/tasks",
+                {
+                    method: "GET"
+                },
+                true
             );
 
-        if (!response.ok) {
 
-            throw new Error(
-                `Unable to load tasks: ${response.status}`
-            );
+        allTasks =
+            Array.isArray(tasks)
+                ? tasks
+                : [];
 
-        }
 
-        tasks =
-            await response.json();
+        applyFilters();
 
-        displayTasks();
 
-        updateStats();
+        updateDashboardStats();
 
-        updateProductivityCards();
+        updateProductivityCounts();
 
         updateAnalytics();
+
 
     } catch (error) {
 
         console.error(
-            "Load tasks error:",
+            "LOAD TASKS ERROR:",
             error
         );
 
-        tasks = [];
-
-        displayTasks();
-
-        updateStats();
-
-        updateProductivityCards();
-
-        updateAnalytics();
-
-        showToast(
-            "Could not connect to the TaskFlow AI server.",
-            "error"
-        );
-
-    }
-
-}
-
-// =========================================
-// DISPLAY TASKS
-// =========================================
-
-function displayTasks() {
-
-    if (!taskList) {
-        return;
-    }
-
-    const searchText =
-        searchInput
-            ? searchInput.value
-                .trim()
+        if (
+            !error.message
                 .toLowerCase()
-            : "";
+                .includes(
+                    "session"
+                )
+        ) {
 
-    const selectedPriority =
-        priorityFilter
-            ? priorityFilter.value
-            : "all";
-
-    const selectedCategory =
-        categoryFilter
-            ? categoryFilter.value
-            : "all";
-
-    const filteredTasks =
-        tasks.filter(task => {
-
-            const title =
-                (task.title || "")
-                    .toLowerCase();
-
-            const description =
-                (task.description || "")
-                    .toLowerCase();
-
-            const matchesSearch =
-                title.includes(searchText) ||
-                description.includes(searchText);
-
-            const matchesPriority =
-                selectedPriority === "all" ||
-                task.priority === selectedPriority;
-
-            const matchesCategory =
-                selectedCategory === "all" ||
-                task.category === selectedCategory;
-
-            const matchesView =
-                matchesProductivityView(task);
-
-            return (
-                matchesSearch &&
-                matchesPriority &&
-                matchesCategory &&
-                matchesView
+            showToast(
+                error.message ||
+                "Unable to load tasks.",
+                "error"
             );
-
-        });
-
-    taskList.innerHTML = "";
-
-    updateTaskCountText(
-        filteredTasks.length
-    );
-
-    if (
-        filteredTasks.length === 0
-    ) {
-
-        showEmptyState();
-
-        return;
-
+        }
     }
-
-    hideEmptyState();
-
-    filteredTasks.forEach(task => {
-
-        const taskElement =
-            createTaskElement(task);
-
-        taskList.appendChild(
-            taskElement
-        );
-
-    });
-
 }
 
-// =========================================
-// CREATE TASK ELEMENT
-// =========================================
 
-function createTaskElement(task) {
-
-    const card =
-        document.createElement("div");
-
-    card.className =
-        "task-card";
-
-    if (task.completed) {
-
-        card.classList.add(
-            "completed"
-        );
-
-    }
-
-    if (
-        isOverdue(task) &&
-        !task.completed
-    ) {
-
-        card.classList.add(
-            "overdue"
-        );
-
-    }
-
-    const dueStatus =
-        getDueStatus(task);
-
-    const priorityClass =
-        `priority-${task.priority}`;
-
-    const formattedDate =
-        task.date
-            ? formatDate(task.date)
-            : "No due date";
-
-    card.innerHTML = `
-
-        <div class="task-top">
-
-            <div class="task-main">
-
-                <input
-                    type="checkbox"
-                    class="task-checkbox"
-                    ${task.completed ? "checked" : ""}
-                    aria-label="Complete task"
-                >
-
-                <div class="task-content">
-
-                    <div class="task-title">
-                        ${escapeHTML(task.title)}
-                    </div>
-
-                    ${
-                        task.description
-                            ? `
-                                <div class="task-description">
-                                    ${escapeHTML(
-                                        task.description
-                                    )}
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    <div class="task-meta">
-
-                        <span class="badge ${priorityClass}">
-                            ${capitalize(task.priority)}
-                        </span>
-
-                        <span class="badge">
-                            ${escapeHTML(task.category)}
-                        </span>
-
-                        <span class="badge">
-                            📅 ${formattedDate}
-                        </span>
-
-                        <span
-                            class="task-status ${dueStatus.className}"
-                        >
-                            ${dueStatus.text}
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="task-actions">
-
-                <button
-                    class="task-action-button edit-button"
-                    title="Edit task"
-                    type="button"
-                >
-                    ✏️
-                </button>
-
-                <button
-                    class="task-action-button delete-button"
-                    title="Delete task"
-                    type="button"
-                >
-                    🗑️
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-    // Checkbox
-    const checkbox =
-        card.querySelector(
-            ".task-checkbox"
-        );
-
-    if (checkbox) {
-
-        checkbox.addEventListener(
-            "change",
-            () => toggleTask(task.id)
-        );
-
-    }
-
-    // Edit button
-    const editButton =
-        card.querySelector(
-            ".edit-button"
-        );
-
-    if (editButton) {
-
-        editButton.addEventListener(
-            "click",
-            () => openEditModal(task.id)
-        );
-
-    }
-
-    // Delete button
-    const deleteButton =
-        card.querySelector(
-            ".delete-button"
-        );
-
-    if (deleteButton) {
-
-        deleteButton.addEventListener(
-            "click",
-            () => deleteTask(task.id)
-        );
-
-    }
-
-    return card;
-
-}
-
-// =========================================
+// ============================================================
 // CREATE TASK
-// =========================================
+// ============================================================
 
-async function createTask(event) {
+async function handleCreateTask(event) {
 
     event.preventDefault();
 
+
+    const titleInput =
+        document.getElementById(
+            "title"
+        );
+
+    const descriptionInput =
+        document.getElementById(
+            "description"
+        );
+
+    const priorityInput =
+        document.getElementById(
+            "priority"
+        );
+
+    const categoryInput =
+        document.getElementById(
+            "category"
+        );
+
+    const dateInput =
+        document.getElementById(
+            "date"
+        );
+
+
+    if (!titleInput) {
+        return;
+    }
+
+
     const title =
-        titleInput
-            ? titleInput.value.trim()
-            : "";
+        titleInput.value.trim();
+
 
     if (!title) {
 
         showToast(
             "Please enter a task title.",
-            "warning"
+            "error"
         );
 
         return;
-
     }
 
-    const taskData = {
+
+    const task = {
 
         title: title,
 
@@ -629,157 +1438,120 @@ async function createTask(event) {
             dateInput
                 ? dateInput.value
                 : ""
-
     };
+
 
     const button =
         document.getElementById(
             "addTaskButton"
         );
 
-    setButtonLoading(
-        button,
-        true
-    );
+
+    if (button) {
+
+        button.disabled =
+            true;
+    }
+
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/tasks`,
-                {
+        await apiFetch(
+            "/tasks",
+            {
+                method: "POST",
+                body: JSON.stringify(task)
+            },
+            true
+        );
 
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            taskData
-                        )
-
-                }
-            );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Failed to create task"
-            );
-
-        }
-
-        if (taskForm) {
-            taskForm.reset();
-        }
-
-        if (priorityInput) {
-            priorityInput.value =
-                "medium";
-        }
-
-        if (categoryInput) {
-            categoryInput.value =
-                "Other";
-        }
 
         showToast(
-            "Task created successfully! 🎉",
+            "Task created successfully.",
             "success"
         );
 
+
+        const form =
+            document.getElementById(
+                "taskForm"
+            );
+
+        if (form) {
+
+            form.reset();
+        }
+
+
         await loadTasks();
+
 
     } catch (error) {
 
         console.error(
-            "Create task error:",
+            "CREATE TASK ERROR:",
             error
         );
 
+
         showToast(
-            "Could not create the task.",
+            error.message ||
+            "Unable to create task.",
             "error"
         );
 
+
     } finally {
 
-        setButtonLoading(
-            button,
-            false
-        );
+        if (button) {
 
+            button.disabled =
+                false;
+        }
     }
-
 }
 
-// =========================================
-// TOGGLE TASK
-// =========================================
+
+// ============================================================
+// COMPLETE TASK
+// ============================================================
 
 async function toggleTask(taskId) {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/tasks/${taskId}/complete`,
-                {
-                    method: "PATCH"
-                }
-            );
+        await apiFetch(
+            `/tasks/${taskId}/complete`,
+            {
+                method: "PATCH"
+            },
+            true
+        );
 
-        if (!response.ok) {
-
-            throw new Error(
-                "Failed to update task"
-            );
-
-        }
-
-        const result =
-            await response.json();
-
-        if (result.completed) {
-
-            showToast(
-                "Task completed! 🎉",
-                "success"
-            );
-
-        } else {
-
-            showToast(
-                "Task moved back to pending.",
-                "warning"
-            );
-
-        }
 
         await loadTasks();
+
 
     } catch (error) {
 
         console.error(
-            "Toggle task error:",
+            "TOGGLE TASK ERROR:",
             error
         );
 
+
         showToast(
-            "Could not update the task.",
+            error.message ||
+            "Unable to update task.",
             "error"
         );
-
     }
-
 }
 
-// =========================================
+
+// ============================================================
 // DELETE TASK
-// =========================================
+// ============================================================
 
 async function deleteTask(taskId) {
 
@@ -788,61 +1560,62 @@ async function deleteTask(taskId) {
             "Are you sure you want to delete this task?"
         );
 
+
     if (!confirmed) {
         return;
     }
 
+
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/tasks/${taskId}`,
-                {
-                    method: "DELETE"
-                }
-            );
+        await apiFetch(
+            `/tasks/${taskId}`,
+            {
+                method: "DELETE"
+            },
+            true
+        );
 
-        if (!response.ok) {
-
-            throw new Error(
-                "Failed to delete task"
-            );
-
-        }
 
         showToast(
             "Task deleted successfully.",
             "success"
         );
 
+
         await loadTasks();
+
 
     } catch (error) {
 
         console.error(
-            "Delete task error:",
+            "DELETE TASK ERROR:",
             error
         );
 
+
         showToast(
-            "Could not delete the task.",
+            error.message ||
+            "Unable to delete task.",
             "error"
         );
-
     }
-
 }
 
-// =========================================
-// OPEN EDIT MODAL
-// =========================================
+
+// ============================================================
+// EDIT TASK
+// ============================================================
 
 function openEditModal(taskId) {
 
     const task =
-        tasks.find(
-            item => item.id === taskId
+        allTasks.find(
+            item =>
+                Number(item.id) ===
+                Number(taskId)
         );
+
 
     if (!task) {
 
@@ -852,286 +1625,341 @@ function openEditModal(taskId) {
         );
 
         return;
-
     }
 
-    editingTaskId =
+
+    currentEditTaskId =
         taskId;
 
-    if (editTaskId) {
-        editTaskId.value =
-            task.id;
-    }
 
-    if (editTitle) {
-        editTitle.value =
-            task.title;
-    }
-
-    if (editDescription) {
-        editDescription.value =
-            task.description || "";
-    }
-
-    if (editPriority) {
-        editPriority.value =
-            task.priority;
-    }
-
-    if (editCategory) {
-        editCategory.value =
-            task.category;
-    }
-
-    if (editDate) {
-        editDate.value =
-            task.date || "";
-    }
-
-    if (editModal) {
-
-        editModal.classList.remove(
-            "hidden"
-        );
-
-    }
-
-    document.body.style.overflow =
-        "hidden";
-
-    setTimeout(
-        () => {
-
-            if (editTitle) {
-                editTitle.focus();
-            }
-
-        },
-        100
+    setValue(
+        "editTaskId",
+        task.id
     );
 
+    setValue(
+        "editTitle",
+        task.title
+    );
+
+    setValue(
+        "editDescription",
+        task.description
+    );
+
+    setValue(
+        "editPriority",
+        task.priority
+    );
+
+    setValue(
+        "editCategory",
+        task.category
+    );
+
+    setValue(
+        "editDate",
+        task.date
+    );
+
+
+    const modal =
+        document.getElementById(
+            "editModal"
+        );
+
+
+    if (modal) {
+
+        modal.classList.remove(
+            "hidden"
+        );
+    }
 }
 
-// =========================================
-// CLOSE EDIT MODAL
-// =========================================
 
 function closeEditModal() {
 
-    if (editModal) {
-
-        editModal.classList.add(
-            "hidden"
-        );
-
-    }
-
-    document.body.style.overflow =
-        "";
-
-    editingTaskId =
+    currentEditTaskId =
         null;
 
+
+    const modal =
+        document.getElementById(
+            "editModal"
+        );
+
+
+    if (modal) {
+
+        modal.classList.add(
+            "hidden"
+        );
+    }
 }
 
-// =========================================
-// UPDATE TASK
-// =========================================
 
-async function updateTask(event) {
+async function handleEditTask(event) {
 
     event.preventDefault();
 
-    if (!editingTaskId) {
+
+    if (!currentEditTaskId) {
         return;
     }
 
-    const taskData = {
 
-        title:
-            editTitle
-                ? editTitle.value.trim()
-                : "",
+    const title =
+        getValue(
+            "editTitle"
+        ).trim();
 
-        description:
-            editDescription
-                ? editDescription.value.trim()
-                : "",
 
-        priority:
-            editPriority
-                ? editPriority.value
-                : "medium",
-
-        category:
-            editCategory
-                ? editCategory.value
-                : "Other",
-
-        date:
-            editDate
-                ? editDate.value
-                : ""
-
-    };
-
-    if (!taskData.title) {
+    if (!title) {
 
         showToast(
             "Task title cannot be empty.",
-            "warning"
+            "error"
         );
 
         return;
-
     }
+
+
+    const task = {
+
+        title: title,
+
+        description:
+            getValue(
+                "editDescription"
+            ).trim(),
+
+        priority:
+            getValue(
+                "editPriority"
+            ) || "medium",
+
+        category:
+            getValue(
+                "editCategory"
+            ) || "Other",
+
+        date:
+            getValue(
+                "editDate"
+            )
+    };
+
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/tasks/${editingTaskId}`,
-                {
+        await apiFetch(
+            `/tasks/${currentEditTaskId}`,
+            {
+                method: "PUT",
+                body: JSON.stringify(task)
+            },
+            true
+        );
 
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify(
-                            taskData
-                        )
-
-                }
-            );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Failed to update task"
-            );
-
-        }
 
         closeEditModal();
 
+
         showToast(
-            "Task updated successfully! ✨",
+            "Task updated successfully.",
             "success"
         );
 
+
         await loadTasks();
+
 
     } catch (error) {
 
         console.error(
-            "Update task error:",
+            "EDIT TASK ERROR:",
             error
         );
 
+
         showToast(
-            "Could not update the task.",
+            error.message ||
+            "Unable to update task.",
             "error"
         );
-
     }
-
 }
 
-// =========================================
-// PRODUCTIVITY VIEWS
-// =========================================
 
-function setProductivityView(view) {
+// ============================================================
+// FILTERS
+// ============================================================
 
-    currentView =
-        view;
+function applyFilters() {
 
-    document
-        .querySelectorAll(
-            ".productivity-card"
+    const search =
+        (
+            document.getElementById(
+                "searchInput"
+            )?.value || ""
         )
-        .forEach(card => {
+            .toLowerCase()
+            .trim();
 
-            card.classList.toggle(
-                "active",
-                card.dataset.view === view
-            );
 
-        });
+    const priority =
+        document.getElementById(
+            "priorityFilter"
+        )?.value || "all";
+
+
+    const category =
+        document.getElementById(
+            "categoryFilter"
+        )?.value || "all";
+
+
+    filteredTasks =
+        allTasks.filter(
+            task => {
+
+                const matchesSearch =
+                    !search ||
+                    String(
+                        task.title || ""
+                    )
+                        .toLowerCase()
+                        .includes(
+                            search
+                        ) ||
+                    String(
+                        task.description || ""
+                    )
+                        .toLowerCase()
+                        .includes(
+                            search
+                        );
+
+
+                const matchesPriority =
+                    priority === "all" ||
+                    task.priority ===
+                        priority;
+
+
+                const matchesCategory =
+                    category === "all" ||
+                    task.category ===
+                        category;
+
+
+                const matchesView =
+                    matchesCurrentView(
+                        task
+                    );
+
+
+                return (
+                    matchesSearch &&
+                    matchesPriority &&
+                    matchesCategory &&
+                    matchesView
+                );
+            }
+        );
+
+
+    renderTasks();
+
 
     updateViewText();
-
-    displayTasks();
-
 }
 
-function clearProductivityView() {
+
+// ============================================================
+// PRODUCTIVITY VIEW
+// ============================================================
+
+function setProductivityView(
+    view
+) {
 
     currentView =
-        "all";
+        view || "all";
 
-    document
-        .querySelectorAll(
-            ".productivity-card"
-        )
-        .forEach(card => {
 
-            card.classList.remove(
-                "active"
-            );
-
-        });
-
-    updateViewText();
-
-    displayTasks();
-
+    applyFilters();
 }
 
-function matchesProductivityView(task) {
+
+function matchesCurrentView(
+    task
+) {
+
+    const today =
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
 
     if (currentView === "all") {
+
         return true;
     }
 
+
     if (currentView === "today") {
 
-        return isDueToday(task);
-
-    }
-
-    if (currentView === "upcoming") {
-
-        return isUpcoming(task);
-
-    }
-
-    if (currentView === "overdue") {
-
         return (
-            isOverdue(task) &&
+            task.date === today &&
             !task.completed
         );
-
     }
+
 
     if (currentView === "completed") {
 
-        return task.completed;
-
+        return Boolean(
+            task.completed
+        );
     }
 
-    return true;
 
+    if (currentView === "upcoming") {
+
+        if (
+            !task.date ||
+            task.completed
+        ) {
+
+            return false;
+        }
+
+
+        return task.date >= today;
+    }
+
+
+    if (currentView === "overdue") {
+
+        if (
+            !task.date ||
+            task.completed
+        ) {
+
+            return false;
+        }
+
+
+        return task.date < today;
+    }
+
+
+    return true;
 }
 
-// =========================================
-// PRODUCTIVITY VIEW TEXT
-// =========================================
 
 function updateViewText() {
 
@@ -1140,17 +1968,17 @@ function updateViewText() {
             "activeViewText"
         );
 
+
     if (!element) {
         return;
     }
 
+
     const labels = {
 
-        all:
-            "Showing all tasks",
+        all: "Showing all tasks",
 
-        today:
-            "Showing tasks due today",
+        today: "Showing today's tasks",
 
         upcoming:
             "Showing upcoming tasks",
@@ -1160,181 +1988,269 @@ function updateViewText() {
 
         completed:
             "Showing completed tasks"
-
     };
+
 
     element.textContent =
         labels[currentView] ||
         labels.all;
-
 }
 
-// =========================================
-// DATE HELPERS
-// =========================================
 
-function getTodayString() {
+// ============================================================
+// RENDER TASKS
+// ============================================================
 
-    const today =
-        new Date();
+function renderTasks() {
 
-    const year =
-        today.getFullYear();
-
-    const month =
-        String(
-            today.getMonth() + 1
-        ).padStart(2, "0");
-
-    const day =
-        String(
-            today.getDate()
-        ).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-
-}
-
-function isDueToday(task) {
-
-    return (
-        task.date ===
-        getTodayString()
-    );
-
-}
-
-function isUpcoming(task) {
-
-    if (
-        !task.date ||
-        task.completed
-    ) {
-
-        return false;
-
-    }
-
-    return (
-        task.date >
-        getTodayString()
-    );
-
-}
-
-function isOverdue(task) {
-
-    if (!task.date) {
-        return false;
-    }
-
-    return (
-        task.date <
-        getTodayString()
-    );
-
-}
-
-function getDueStatus(task) {
-
-    if (task.completed) {
-
-        return {
-
-            text: "Completed",
-
-            className:
-                "status-completed"
-
-        };
-
-    }
-
-    if (isOverdue(task)) {
-
-        return {
-
-            text: "Overdue",
-
-            className:
-                "status-overdue"
-
-        };
-
-    }
-
-    if (isDueToday(task)) {
-
-        return {
-
-            text: "Due Today",
-
-            className:
-                "status-pending"
-
-        };
-
-    }
-
-    return {
-
-        text: "Pending",
-
-        className:
-            "status-pending"
-
-    };
-
-}
-
-// =========================================
-// DATE FORMAT
-// =========================================
-
-function formatDate(dateString) {
-
-    if (!dateString) {
-        return "No due date";
-    }
-
-    const date =
-        new Date(
-            `${dateString}T00:00:00`
+    const container =
+        document.getElementById(
+            "taskList"
         );
 
-    return date.toLocaleDateString(
-        "en-IN",
-        {
+    const emptyState =
+        document.getElementById(
+            "emptyState"
+        );
 
-            day: "2-digit",
 
-            month: "short",
+    if (!container) {
+        return;
+    }
 
-            year: "numeric"
 
+    if (
+        filteredTasks.length === 0
+    ) {
+
+        container.innerHTML =
+            "";
+
+
+        if (emptyState) {
+
+            emptyState.classList.remove(
+                "hidden"
+            );
         }
-    );
 
+        updateTaskCountText();
+
+        return;
+    }
+
+
+    if (emptyState) {
+
+        emptyState.classList.add(
+            "hidden"
+        );
+    }
+
+
+    container.innerHTML =
+        filteredTasks
+            .map(task =>
+                createTaskHTML(
+                    task
+                )
+            )
+            .join("");
+
+
+    updateTaskCountText();
 }
 
-// =========================================
-// STATS
-// =========================================
 
-function updateStats() {
-
-    const total =
-        tasks.length;
+function createTaskHTML(task) {
 
     const completed =
-        tasks.filter(
-            task => task.completed
+        Boolean(
+            task.completed
+        );
+
+
+    const priority =
+        String(
+            task.priority ||
+            "medium"
+        ).toLowerCase();
+
+
+    const title =
+        escapeHTML(
+            task.title || ""
+        );
+
+
+    const description =
+        escapeHTML(
+            task.description || ""
+        );
+
+
+    const category =
+        escapeHTML(
+            task.category ||
+            "Other"
+        );
+
+
+    const date =
+        task.date
+            ? escapeHTML(
+                task.date
+            )
+            : "No due date";
+
+
+    return `
+
+        <div class="task-card ${
+            completed
+                ? "completed"
+                : ""
+        }">
+
+            <div class="task-check">
+
+                <button
+                    class="complete-button"
+                    onclick="toggleTask(${task.id})"
+                    title="${
+                        completed
+                            ? "Mark pending"
+                            : "Mark complete"
+                    }"
+                >
+                    ${
+                        completed
+                            ? "✓"
+                            : ""
+                    }
+                </button>
+
+            </div>
+
+
+            <div class="task-content">
+
+                <div class="task-title-row">
+
+                    <h3>
+                        ${title}
+                    </h3>
+
+                    <span
+                        class="priority-badge ${priority}"
+                    >
+                        ${priority}
+                    </span>
+
+                </div>
+
+
+                ${
+                    description
+                        ? `<p>${description}</p>`
+                        : ""
+                }
+
+
+                <div class="task-meta">
+
+                    <span>
+                        ${category}
+                    </span>
+
+                    <span>
+                        ${date}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="task-actions">
+
+                <button
+                    onclick="openEditModal(${task.id})"
+                    title="Edit task"
+                >
+                    Edit
+                </button>
+
+
+                <button
+                    onclick="deleteTask(${task.id})"
+                    title="Delete task"
+                >
+                    Delete
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+// ============================================================
+// TASK COUNT
+// ============================================================
+
+function updateTaskCountText() {
+
+    const element =
+        document.getElementById(
+            "taskCountText"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    const count =
+        filteredTasks.length;
+
+
+    element.textContent =
+        `${count} ${
+            count === 1
+                ? "task"
+                : "tasks"
+        }`;
+}
+
+
+// ============================================================
+// DASHBOARD STATS
+// ============================================================
+
+function updateDashboardStats() {
+
+    const total =
+        allTasks.length;
+
+
+    const completed =
+        allTasks.filter(
+            task =>
+                Boolean(
+                    task.completed
+                )
         ).length;
+
 
     const pending =
         total - completed;
 
-    const completionRate =
+
+    const rate =
         total === 0
             ? 0
             : Math.round(
@@ -1344,328 +2260,196 @@ function updateStats() {
                 ) * 100
             );
 
-    const totalElement =
-        document.getElementById(
-            "totalTasks"
-        );
 
-    const pendingElement =
-        document.getElementById(
-            "pendingTasks"
-        );
+    setText(
+        "totalTasks",
+        total
+    );
 
-    const completedElement =
-        document.getElementById(
-            "completedTasks"
-        );
 
-    const rateElement =
-        document.getElementById(
-            "completionRate"
-        );
+    setText(
+        "pendingTasks",
+        pending
+    );
 
-    if (totalElement) {
-        totalElement.textContent =
-            total;
-    }
 
-    if (pendingElement) {
-        pendingElement.textContent =
-            pending;
-    }
+    setText(
+        "completedTasks",
+        completed
+    );
 
-    if (completedElement) {
-        completedElement.textContent =
-            completed;
-    }
 
-    if (rateElement) {
-        rateElement.textContent =
-            `${completionRate}%`;
-    }
+    setText(
+        "completionRate",
+        `${rate}%`
+    );
 
+
+    setText(
+        "analyticsCompletionRate",
+        `${rate}%`
+    );
 }
 
-// =========================================
-// PRODUCTIVITY CARDS
-// =========================================
 
-function updateProductivityCards() {
+// ============================================================
+// PRODUCTIVITY COUNTS
+// ============================================================
+
+function updateProductivityCounts() {
 
     const today =
-        tasks.filter(
+        new Date()
+            .toISOString()
+            .split("T")[0];
+
+
+    const todayCount =
+        allTasks.filter(
             task =>
-                isDueToday(task) &&
+                task.date ===
+                today &&
                 !task.completed
         ).length;
 
-    const upcoming =
-        tasks.filter(
-            task =>
-                isUpcoming(task)
-        ).length;
 
-    const overdue =
-        tasks.filter(
+    const upcomingCount =
+        allTasks.filter(
             task =>
-                isOverdue(task) &&
+                task.date &&
+                task.date >= today &&
                 !task.completed
         ).length;
 
-    const completed =
-        tasks.filter(
+
+    const overdueCount =
+        allTasks.filter(
             task =>
-                task.completed
+                task.date &&
+                task.date < today &&
+                !task.completed
         ).length;
 
-    const todayElement =
-        document.getElementById(
-            "todayCount"
-        );
 
-    const upcomingElement =
-        document.getElementById(
-            "upcomingCount"
-        );
+    const completedCount =
+        allTasks.filter(
+            task =>
+                Boolean(
+                    task.completed
+                )
+        ).length;
 
-    const overdueElement =
-        document.getElementById(
-            "overdueCount"
-        );
 
-    const completedElement =
-        document.getElementById(
-            "dashboardCompletedCount"
-        );
+    setText(
+        "todayCount",
+        todayCount
+    );
 
-    if (todayElement) {
-        todayElement.textContent =
-            today;
-    }
 
-    if (upcomingElement) {
-        upcomingElement.textContent =
-            upcoming;
-    }
+    setText(
+        "upcomingCount",
+        upcomingCount
+    );
 
-    if (overdueElement) {
-        overdueElement.textContent =
-            overdue;
-    }
 
-    if (completedElement) {
-        completedElement.textContent =
-            completed;
-    }
+    setText(
+        "overdueCount",
+        overdueCount
+    );
 
+
+    setText(
+        "dashboardCompletedCount",
+        completedCount
+    );
 }
 
-// =========================================
+
+// ============================================================
 // ANALYTICS
-// =========================================
+// ============================================================
 
 function updateAnalytics() {
 
     const high =
-        tasks.filter(
+        allTasks.filter(
             task =>
-                task.priority === "high"
+                !task.completed &&
+                task.priority ===
+                    "high"
         ).length;
+
 
     const medium =
-        tasks.filter(
+        allTasks.filter(
             task =>
-                task.priority === "medium"
+                !task.completed &&
+                task.priority ===
+                    "medium"
         ).length;
+
 
     const low =
-        tasks.filter(
+        allTasks.filter(
             task =>
-                task.priority === "low"
+                !task.completed &&
+                task.priority ===
+                    "low"
         ).length;
+
+
+    setText(
+        "highPriorityCount",
+        high
+    );
+
+
+    setText(
+        "mediumPriorityCount",
+        medium
+    );
+
+
+    setText(
+        "lowPriorityCount",
+        low
+    );
+
+
+    const total =
+        allTasks.length;
+
 
     const completed =
-        tasks.filter(
+        allTasks.filter(
             task =>
-                task.completed
+                Boolean(
+                    task.completed
+                )
         ).length;
 
+
     const rate =
-        tasks.length === 0
+        total === 0
             ? 0
             : Math.round(
                 (
                     completed /
-                    tasks.length
+                    total
                 ) * 100
             );
 
-    const highElement =
-        document.getElementById(
-            "highPriorityCount"
-        );
 
-    const mediumElement =
-        document.getElementById(
-            "mediumPriorityCount"
-        );
-
-    const lowElement =
-        document.getElementById(
-            "lowPriorityCount"
-        );
-
-    const rateElement =
-        document.getElementById(
-            "analyticsCompletionRate"
-        );
-
-    if (highElement) {
-        highElement.textContent =
-            high;
-    }
-
-    if (mediumElement) {
-        mediumElement.textContent =
-            medium;
-    }
-
-    if (lowElement) {
-        lowElement.textContent =
-            low;
-    }
-
-    if (rateElement) {
-        rateElement.textContent =
-            `${rate}%`;
-    }
-
-}
-
-// =========================================
-// TASK COUNT
-// =========================================
-
-function updateTaskCountText(count) {
-
-    const text =
-        count === 1
-            ? "1 task"
-            : `${count} tasks`;
-
-    const element =
-        document.getElementById(
-            "taskCountText"
-        );
-
-    if (element) {
-        element.textContent =
-            text;
-    }
-
-}
-
-// =========================================
-// EMPTY STATE
-// =========================================
-
-function showEmptyState() {
-
-    if (!emptyState) {
-        return;
-    }
-
-    emptyState.classList.remove(
-        "hidden"
+    setText(
+        "analyticsCompletionRate",
+        `${rate}%`
     );
-
-    if (
-        currentView !== "all"
-    ) {
-
-        if (emptyTitle) {
-
-            emptyTitle.textContent =
-                "No tasks in this view";
-
-        }
-
-        if (emptyDescription) {
-
-            emptyDescription.textContent =
-                "Try another productivity view or clear the current filter.";
-
-        }
-
-        return;
-
-    }
-
-    const hasFilters =
-        (
-            searchInput &&
-            searchInput.value.trim() !== ""
-        ) ||
-        (
-            priorityFilter &&
-            priorityFilter.value !== "all"
-        ) ||
-        (
-            categoryFilter &&
-            categoryFilter.value !== "all"
-        );
-
-    if (hasFilters) {
-
-        if (emptyTitle) {
-
-            emptyTitle.textContent =
-                "No matching tasks";
-
-        }
-
-        if (emptyDescription) {
-
-            emptyDescription.textContent =
-                "Try changing your search or filters.";
-
-        }
-
-    } else {
-
-        if (emptyTitle) {
-
-            emptyTitle.textContent =
-                "No tasks yet";
-
-        }
-
-        if (emptyDescription) {
-
-            emptyDescription.textContent =
-                "Create your first task and start making progress.";
-
-        }
-
-    }
-
 }
 
-function hideEmptyState() {
 
-    if (emptyState) {
-
-        emptyState.classList.add(
-            "hidden"
-        );
-
-    }
-
-}
-
-// =========================================
+// ============================================================
 // AI DAILY PLAN
-// =========================================
+// ============================================================
 
 async function generateAIPlan() {
 
@@ -1674,346 +2458,398 @@ async function generateAIPlan() {
             "generatePlanButton"
         );
 
-    setButtonLoading(
-        button,
-        true
-    );
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Generating...";
+    }
+
 
     try {
 
         const response =
-            await fetch(
-                `${API_URL}/ai/plan`,
+            await apiFetch(
+                "/ai/plan",
                 {
                     method: "POST"
-                }
+                },
+                true
             );
 
-        if (!response.ok) {
 
-            throw new Error(
-                "Failed to generate plan"
-            );
+        displayAIPlan(
+            response
+        );
 
-        }
-
-        const data =
-            await response.json();
-
-        displayAIPlan(data);
 
         showToast(
-            "Daily plan generated! 🤖",
+            "Daily plan generated successfully.",
             "success"
         );
+
 
     } catch (error) {
 
         console.error(
-            "AI plan error:",
+            "AI PLAN ERROR:",
             error
         );
 
+
         showToast(
-            "Could not generate the daily plan.",
+            error.message ||
+            "Unable to generate daily plan.",
             "error"
         );
 
+
     } finally {
 
-        setButtonLoading(
-            button,
-            false
-        );
+        if (button) {
 
+            button.disabled =
+                false;
+
+            button.textContent =
+                "✨ Generate Plan";
+        }
     }
-
 }
 
-// =========================================
-// DISPLAY AI PLAN
-// =========================================
 
 function displayAIPlan(data) {
 
-    if (!aiPlan) {
+    const container =
+        document.getElementById(
+            "aiPlan"
+        );
+
+
+    if (!container) {
         return;
     }
 
-    aiPlan.classList.remove(
+
+    container.classList.remove(
         "hidden"
     );
+
 
     if (
         !data.plan ||
         data.plan.length === 0
     ) {
 
-        aiPlan.innerHTML = `
+        container.innerHTML = `
 
             <div class="ai-suggestion">
 
-                ${escapeHTML(
-                    data.suggestion ||
-                    "You're all caught up!"
-                )}
+                <strong>
+                    ${escapeHTML(
+                        data.message ||
+                        "No plan available."
+                    )}
+                </strong>
+
+                <p>
+                    ${escapeHTML(
+                        data.suggestion ||
+                        "You're all caught up!"
+                    )}
+                </p>
 
             </div>
 
         `;
 
         return;
-
     }
 
-    let html = "";
 
-    data.plan.forEach(item => {
+    container.innerHTML = `
 
-        html += `
+        <div class="ai-plan-list">
 
-            <div class="plan-item">
+            ${
+                data.plan
+                    .map(item => `
 
-                <div class="plan-time">
-                    ${escapeHTML(item.time)}
-                </div>
+                        <div class="ai-plan-item">
 
-                <div class="plan-title">
-                    ${escapeHTML(item.title)}
-                </div>
+                            <div class="ai-plan-time">
+                                ${escapeHTML(
+                                    item.time
+                                )}
+                            </div>
 
-                <div class="plan-description">
 
-                    ${escapeHTML(
-                        item.description ||
-                        "Focus on completing this task."
-                    )}
+                            <div class="ai-plan-details">
 
-                    <br>
+                                <h4>
+                                    ${escapeHTML(
+                                        item.title
+                                    )}
+                                </h4>
 
-                    <strong>
-                        Priority:
-                    </strong>
 
-                    ${escapeHTML(
-                        item.priority
-                    )}
+                                <p>
+                                    ${escapeHTML(
+                                        item.description ||
+                                        "Focus on completing this task."
+                                    )}
+                                </p>
 
-                    &nbsp; • &nbsp;
 
-                    <strong>
-                        Category:
-                    </strong>
+                                <small>
+                                    ${escapeHTML(
+                                        item.category ||
+                                        "Other"
+                                    )}
 
-                    ${escapeHTML(
-                        item.category
-                    )}
+                                    •
+                                    
+                                    ${escapeHTML(
+                                        item.priority ||
+                                        "medium"
+                                    )}
+                                </small>
 
-                </div>
+                            </div>
 
-            </div>
+                        </div>
 
-        `;
+                    `)
+                    .join("")
+            }
 
-    });
+        </div>
 
-    if (data.suggestion) {
 
-        html += `
+        <div class="ai-suggestion">
 
-            <div class="ai-suggestion">
+            <strong>
+                Suggestion:
+            </strong>
 
-                💡
-                ${escapeHTML(
-                    data.suggestion
-                )}
+            ${escapeHTML(
+                data.suggestion ||
+                ""
+            )}
 
-            </div>
-
-        `;
-
-    }
-
-    aiPlan.innerHTML =
-        html;
-
-}
-
-// =========================================
-// TOAST NOTIFICATIONS
-// =========================================
-
-function showToast(
-    message,
-    type = "success"
-) {
-
-    if (!toastContainer) {
-        return;
-    }
-
-    const toast =
-        document.createElement(
-            "div"
-        );
-
-    toast.className =
-        `toast ${type}`;
-
-    const icons = {
-
-        success: "✅",
-
-        error: "❌",
-
-        warning: "⚠️",
-
-        info: "ℹ️"
-
-    };
-
-    toast.innerHTML = `
-
-        <span>
-            ${icons[type] || "ℹ️"}
-        </span>
-
-        <span>
-            ${escapeHTML(message)}
-        </span>
+        </div>
 
     `;
-
-    toastContainer.appendChild(
-        toast
-    );
-
-    setTimeout(
-        () => {
-
-            toast.classList.add(
-                "hide"
-            );
-
-            setTimeout(
-                () => toast.remove(),
-                300
-            );
-
-        },
-        3000
-    );
-
 }
 
-// =========================================
-// BUTTON LOADING
-// =========================================
 
-function setButtonLoading(
-    button,
-    loading
-) {
-
-    if (!button) {
-        return;
-    }
-
-    if (loading) {
-
-        button.disabled =
-            true;
-
-        button.classList.add(
-            "loading"
-        );
-
-    } else {
-
-        button.disabled =
-            false;
-
-        button.classList.remove(
-            "loading"
-        );
-
-    }
-
-}
-
-// =========================================
+// ============================================================
 // DARK MODE
-// =========================================
+// ============================================================
+
+function setupDarkMode() {
+
+    const saved =
+        localStorage.getItem(
+            "taskflow_dark_mode"
+        );
+
+
+    if (saved === "true") {
+
+        document.body.classList.add(
+            "dark-mode"
+        );
+    }
+
+
+    updateDarkModeButton();
+}
+
 
 function toggleDarkMode() {
 
     document.body.classList.toggle(
-        "dark"
+        "dark-mode"
     );
 
-    const darkModeEnabled =
+
+    const enabled =
         document.body.classList.contains(
-            "dark"
+            "dark-mode"
         );
+
 
     localStorage.setItem(
-        "taskflowDarkMode",
-        darkModeEnabled
-            ? "enabled"
-            : "disabled"
+        "taskflow_dark_mode",
+        enabled
+            ? "true"
+            : "false"
     );
 
-    updateDarkModeIcon();
 
+    updateDarkModeButton();
 }
 
-function loadDarkMode() {
 
-    const savedMode =
-        localStorage.getItem(
-            "taskflowDarkMode"
-        );
-
-    if (
-        savedMode === "enabled"
-    ) {
-
-        document.body.classList.add(
-            "dark"
-        );
-
-    }
-
-    updateDarkModeIcon();
-
-}
-
-function updateDarkModeIcon() {
+function updateDarkModeButton() {
 
     const button =
         document.getElementById(
             "darkModeButton"
         );
 
+
     if (!button) {
         return;
     }
 
+
     const dark =
         document.body.classList.contains(
-            "dark"
+            "dark-mode"
         );
+
 
     button.textContent =
         dark
             ? "☀️"
             : "🌙";
-
 }
 
-// =========================================
-// PAGE LOADER
-// =========================================
+
+// ============================================================
+// TOAST
+// ============================================================
+
+function showToast(
+    message,
+    type = "success"
+) {
+
+    let container =
+        document.getElementById(
+            "toastContainer"
+        );
+
+
+    if (!container) {
+
+        container =
+            document.createElement(
+                "div"
+            );
+
+        container.id =
+            "toastContainer";
+
+        container.className =
+            "toast-container";
+
+        document.body.appendChild(
+            container
+        );
+    }
+
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.className =
+        `toast ${type}`;
+
+
+    toast.textContent =
+        message;
+
+
+    container.appendChild(
+        toast
+    );
+
+
+    requestAnimationFrame(
+        () => {
+
+            toast.classList.add(
+                "show"
+            );
+        }
+    );
+
+
+    setTimeout(
+        () => {
+
+            toast.classList.remove(
+                "show"
+            );
+
+            setTimeout(
+                () => {
+
+                    toast.remove();
+
+                },
+                300
+            );
+
+        },
+        3500
+    );
+}
+
+
+// ============================================================
+// AUTH ERROR
+// ============================================================
+
+function showError(
+    element,
+    message
+) {
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        message || "Something went wrong.";
+
+
+    element.classList.remove(
+        "hidden"
+    );
+}
+
+
+function clearError(element) {
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        "";
+
+
+    element.classList.add(
+        "hidden"
+    );
+}
+
+
+// ============================================================
+// LOADER
+// ============================================================
 
 function hidePageLoader() {
 
@@ -2022,80 +2858,124 @@ function hidePageLoader() {
             "pageLoader"
         );
 
-    if (!loader) {
-        return;
+
+    if (loader) {
+
+        loader.classList.add(
+            "hidden"
+        );
     }
-
-    setTimeout(
-        () => {
-
-            loader.classList.add(
-                "hidden"
-            );
-
-        },
-        300
-    );
-
 }
 
-// =========================================
-// CAPITALIZE
-// =========================================
 
-function capitalize(text) {
+// ============================================================
+// HELPERS
+// ============================================================
 
-    if (!text) {
-        return "";
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            value;
     }
-
-    return (
-        text.charAt(0).toUpperCase() +
-        text.slice(1)
-    );
-
 }
 
-// =========================================
-// HTML SECURITY
-// =========================================
+
+function setValue(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.value =
+            value ?? "";
+    }
+}
+
+
+function getValue(id) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    return element
+        ? element.value
+        : "";
+}
+
 
 function escapeHTML(value) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-
-    }
-
-    return String(value)
-
+    return String(
+        value ?? ""
+    )
         .replace(
             /&/g,
             "&amp;"
         )
-
         .replace(
             /</g,
             "&lt;"
         )
-
         .replace(
             />/g,
             "&gt;"
         )
-
         .replace(
             /"/g,
             "&quot;"
         )
-
         .replace(
             /'/g,
             "&#039;"
         );
-
 }
+
+
+// ============================================================
+// GLOBAL FUNCTIONS FOR HTML ONCLICK
+// ============================================================
+
+window.toggleTask =
+    toggleTask;
+
+window.deleteTask =
+    deleteTask;
+
+window.openEditModal =
+    openEditModal;
+
+window.closeEditModal =
+    closeEditModal;
+
+window.generateAIPlan =
+    generateAIPlan;
+
+window.handleLogout =
+    handleLogout;
+
+window.showLoginPanel =
+    showLoginPanel;
+
+window.showSignupPanel =
+    showSignupPanel;

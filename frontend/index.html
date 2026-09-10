@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="TaskFlow AI - Smart Task Management"
+    >
 
     <title>TaskFlow AI</title>
 
@@ -13,277 +20,644 @@
 
 <body>
 
-    <!-- =========================================
-         PAGE LOADER
-    ========================================== -->
+<!-- =========================================
+     PAGE LOADER
+========================================= -->
 
-    <div id="pageLoader" class="page-loader">
-
+<div id="pageLoader" class="page-loader">
+    <div class="loader-content">
         <div class="loader-spinner"></div>
-
         <p>Loading TaskFlow AI...</p>
+    </div>
+</div>
+
+
+<!-- =========================================
+     AUTH SCREEN
+========================================= -->
+
+<section id="authScreen" class="auth-screen hidden">
+
+    <div class="auth-container">
+
+        <!-- BRAND -->
+
+        <div class="auth-brand">
+
+            <div class="auth-logo">
+                ✓
+            </div>
+
+            <div>
+                <h1>TaskFlow AI</h1>
+                <p>Smart productivity. Better results.</p>
+            </div>
+
+        </div>
+
+
+        <!-- AUTH CARD -->
+
+        <div class="auth-card">
+
+            <!-- ===============================
+                 LOGIN
+            ================================ -->
+
+            <div id="loginPanel">
+
+                <div class="auth-heading">
+                    <span class="auth-badge">WELCOME BACK</span>
+
+                    <h2>Welcome back 👋</h2>
+
+                    <p>
+                        Sign in to continue managing your tasks.
+                    </p>
+                </div>
+
+
+                <form id="loginForm" class="auth-form">
+
+                    <div class="form-group">
+
+                        <label for="loginEmail">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="loginEmail"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group password-group">
+
+                        <label for="loginPassword">
+                            Password
+                        </label>
+
+                        <div class="password-wrapper">
+
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="loginPassword"
+                                aria-label="Show password"
+                            >
+                                👁️
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- REMEMBER ME -->
+
+                    <div class="remember-row">
+
+                        <label class="remember-label">
+
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span>
+                                Remember me
+                            </span>
+
+                        </label>
+
+                        <span class="session-info">
+                            Keep me signed in
+                        </span>
+
+                    </div>
+
+
+                    <!-- AUTH ERROR -->
+
+                    <div
+                        id="loginError"
+                        class="auth-error hidden"
+                    ></div>
+
+
+                    <button
+                        type="submit"
+                        id="loginButton"
+                        class="primary-button auth-submit"
+                    >
+                        Sign In
+                    </button>
+
+                </form>
+
+
+                <div class="auth-switch">
+
+                    <span>
+                        Don't have an account?
+                    </span>
+
+                    <button
+                        type="button"
+                        id="showSignupButton"
+                        class="link-button"
+                    >
+                        Create account
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- ===============================
+                 SIGNUP
+            ================================ -->
+
+            <div id="signupPanel" class="hidden">
+
+                <div class="auth-heading">
+
+                    <span class="auth-badge">
+                        GET STARTED
+                    </span>
+
+                    <h2>Create your account 🚀</h2>
+
+                    <p>
+                        Start organizing your work with TaskFlow AI.
+                    </p>
+
+                </div>
+
+
+                <form id="signupForm" class="auth-form">
+
+                    <div class="form-group">
+
+                        <label for="signupUsername">
+                            Username
+                        </label>
+
+                        <input
+                            type="text"
+                            id="signupUsername"
+                            placeholder="Choose a username"
+                            autocomplete="username"
+                            minlength="3"
+                            maxlength="50"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="signupEmail">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="signupEmail"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group password-group">
+
+                        <label for="signupPassword">
+                            Password
+                        </label>
+
+                        <div class="password-wrapper">
+
+                            <input
+                                type="password"
+                                id="signupPassword"
+                                placeholder="Create a password"
+                                autocomplete="new-password"
+                                minlength="6"
+                                maxlength="72"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="signupPassword"
+                                aria-label="Show password"
+                            >
+                                👁️
+                            </button>
+
+                        </div>
+
+                        <small>
+                            Use at least 6 characters.
+                        </small>
+
+                    </div>
+
+
+                    <div
+                        id="signupError"
+                        class="auth-error hidden"
+                    ></div>
+
+
+                    <button
+                        type="submit"
+                        id="signupButton"
+                        class="primary-button auth-submit"
+                    >
+                        Create Account
+                    </button>
+
+                </form>
+
+
+                <div class="auth-switch">
+
+                    <span>
+                        Already have an account?
+                    </span>
+
+                    <button
+                        type="button"
+                        id="showLoginButton"
+                        class="link-button"
+                    >
+                        Sign in
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <p class="auth-footer">
+            © 2026 TaskFlow AI. Built for smarter productivity.
+        </p>
 
     </div>
 
+</section>
 
-    <!-- =========================================
-         APP
-    ========================================== -->
 
-    <div class="app">
+<!-- =========================================
+     MAIN APPLICATION
+========================================= -->
 
-        <!-- =====================================
-             HEADER
-        ====================================== -->
+<div id="app" class="app hidden">
 
-        <header class="header">
+    <!-- HEADER -->
 
-            <div class="brand">
+    <header class="header">
 
-                <div class="brand-icon">
-                    ✓
+        <div class="brand">
+
+            <div class="brand-icon">
+                ✓
+            </div>
+
+            <div class="brand-text">
+
+                <h1>TaskFlow AI</h1>
+
+                <p>
+                    Smart task management
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <!-- USER -->
+
+            <div class="user-profile">
+
+                <div class="user-avatar">
+                    <span id="userInitial">U</span>
+                </div>
+
+                <div class="user-details">
+
+                    <span class="welcome-text">
+                        Welcome back
+                    </span>
+
+                    <strong id="usernameDisplay">
+                        User
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- LOGOUT -->
+
+            <button
+                id="logoutButton"
+                class="icon-button logout-button"
+                type="button"
+                title="Logout"
+                aria-label="Logout"
+            >
+                🚪
+            </button>
+
+
+            <!-- DARK MODE -->
+
+            <button
+                id="darkModeButton"
+                class="icon-button"
+                type="button"
+                title="Toggle dark mode"
+                aria-label="Toggle dark mode"
+            >
+                🌙
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- STATS -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                📋
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Total Tasks
+                </span>
+
+                <strong id="totalTasks">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ⏳
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Pending
+                </span>
+
+                <strong id="pendingTasks">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ✅
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Completed
+                </span>
+
+                <strong id="completedTasks">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                📈
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Completion Rate
+                </span>
+
+                <strong id="completionRate">
+                    0%
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- PRODUCTIVITY -->
+
+    <section class="section">
+
+        <div class="section-header">
+
+            <div>
+                <h2>
+                    Productivity Dashboard
+                </h2>
+
+                <p>
+                    Stay focused on what matters.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="productivity-grid">
+
+            <button
+                class="productivity-card"
+                data-view="today"
+                type="button"
+            >
+
+                <div class="productivity-icon">
+                    📅
                 </div>
 
                 <div>
-                    <h1>TaskFlow AI</h1>
+                    <span>Today</span>
 
-                    <p>Organize. Focus. Accomplish.</p>
+                    <strong id="todayCount">
+                        0
+                    </strong>
                 </div>
 
-            </div>
+            </button>
 
 
-            <div class="header-actions">
+            <button
+                class="productivity-card"
+                data-view="upcoming"
+                type="button"
+            >
 
-                <button
-                    id="darkModeButton"
-                    class="icon-button"
-                    title="Toggle dark mode"
-                >
-                    🌙
-                </button>
-
-            </div>
-
-        </header>
-
-
-        <!-- =====================================
-             DASHBOARD STATS
-        ====================================== -->
-
-        <section class="stats-section">
-
-            <div class="stat-card">
-
-                <div class="stat-icon">
-                    📋
+                <div class="productivity-icon">
+                    🔮
                 </div>
 
                 <div>
-                    <span>Total Tasks</span>
-                    <strong id="totalTasks">0</strong>
+                    <span>Upcoming</span>
+
+                    <strong id="upcomingCount">
+                        0
+                    </strong>
                 </div>
 
-            </div>
+            </button>
 
 
-            <div class="stat-card">
+            <button
+                class="productivity-card"
+                data-view="overdue"
+                type="button"
+            >
 
-                <div class="stat-icon">
-                    ⏳
+                <div class="productivity-icon">
+                    ⚠️
                 </div>
 
                 <div>
-                    <span>Pending</span>
-                    <strong id="pendingTasks">0</strong>
+                    <span>Overdue</span>
+
+                    <strong id="overdueCount">
+                        0
+                    </strong>
                 </div>
 
-            </div>
+            </button>
 
 
-            <div class="stat-card">
+            <button
+                class="productivity-card"
+                data-view="completed"
+                type="button"
+            >
 
-                <div class="stat-icon">
-                    ✅
+                <div class="productivity-icon">
+                    🏆
                 </div>
 
                 <div>
                     <span>Completed</span>
-                    <strong id="completedTasks">0</strong>
+
+                    <strong id="dashboardCompletedCount">
+                        0
+                    </strong>
                 </div>
 
-            </div>
+            </button>
+
+        </div>
 
 
-            <div class="stat-card">
+        <div class="active-view-bar">
 
-                <div class="stat-icon">
-                    📈
-                </div>
+            <span id="activeViewText">
+                Showing all tasks
+            </span>
 
-                <div>
-                    <span>Progress</span>
-                    <strong id="completionRate">0%</strong>
-                </div>
+            <button
+                id="clearViewButton"
+                type="button"
+                class="secondary-button"
+            >
+                Clear View
+            </button>
 
-            </div>
+        </div>
 
-        </section>
-
-
-        <!-- =====================================
-             PRODUCTIVITY DASHBOARD
-        ====================================== -->
-
-        <section class="productivity-section">
-
-            <div class="productivity-header">
-
-                <div>
-
-                    <h2>Productivity Overview</h2>
-
-                    <p>Quickly view your current workload.</p>
-
-                </div>
-
-            </div>
+    </section>
 
 
-            <div class="productivity-grid">
+    <!-- CREATE TASK -->
 
-                <button
-                    class="productivity-card"
-                    data-view="today"
-                >
+    <section class="section">
 
-                    <div class="productivity-icon">
-                        📅
-                    </div>
+        <div class="section-header">
 
-                    <div class="productivity-info">
+            <div>
+                <h2>
+                    Create New Task
+                </h2>
 
-                        <span>Today</span>
-
-                        <strong id="todayCount">0</strong>
-
-                    </div>
-
-                </button>
-
-
-                <button
-                    class="productivity-card"
-                    data-view="upcoming"
-                >
-
-                    <div class="productivity-icon">
-                        🔜
-                    </div>
-
-                    <div class="productivity-info">
-
-                        <span>Upcoming</span>
-
-                        <strong id="upcomingCount">0</strong>
-
-                    </div>
-
-                </button>
-
-
-                <button
-                    class="productivity-card"
-                    data-view="overdue"
-                >
-
-                    <div class="productivity-icon">
-                        ⚠️
-                    </div>
-
-                    <div class="productivity-info">
-
-                        <span>Overdue</span>
-
-                        <strong id="overdueCount">0</strong>
-
-                    </div>
-
-                </button>
-
-
-                <button
-                    class="productivity-card"
-                    data-view="completed"
-                >
-
-                    <div class="productivity-icon">
-                        🏆
-                    </div>
-
-                    <div class="productivity-info">
-
-                        <span>Completed</span>
-
-                        <strong id="dashboardCompletedCount">0</strong>
-
-                    </div>
-
-                </button>
-
-            </div>
-
-
-            <div class="view-toolbar">
-
-                <p id="activeViewText" class="active-view-text">
-                    Showing all tasks
+                <p>
+                    Add something you want to accomplish.
                 </p>
-
-                <button
-                    id="clearViewButton"
-                    class="clear-view-button"
-                >
-                    Clear View
-                </button>
-
             </div>
 
-        </section>
+        </div>
 
 
-        <!-- =====================================
-             ADD TASK
-        ====================================== -->
+        <form id="taskForm" class="task-form">
 
-        <section class="task-form-section">
+            <div class="form-row">
 
-            <div class="section-heading">
-
-                <div>
-
-                    <h2>Create a New Task</h2>
-
-                    <p>Add something you want to accomplish.</p>
-
-                </div>
-
-            </div>
-
-
-            <form id="taskForm" class="task-form">
-
-                <div class="form-group">
+                <div class="form-group form-group-large">
 
                     <label for="title">
-                        Task Title
+                        Task Title *
                     </label>
 
                     <input
                         type="text"
                         id="title"
                         placeholder="What needs to be done?"
+                        maxlength="200"
                         required
                     >
 
@@ -292,126 +666,152 @@
 
                 <div class="form-group">
 
-                    <label for="description">
-                        Description
+                    <label for="priority">
+                        Priority
                     </label>
 
-                    <textarea
-                        id="description"
-                        placeholder="Add some details..."
-                        rows="3"
-                    ></textarea>
+                    <select id="priority">
+
+                        <option value="low">
+                            Low
+                        </option>
+
+                        <option value="medium" selected>
+                            Medium
+                        </option>
+
+                        <option value="high">
+                            High
+                        </option>
+
+                    </select>
 
                 </div>
 
 
-                <div class="form-row">
+                <div class="form-group">
 
-                    <div class="form-group">
+                    <label for="category">
+                        Category
+                    </label>
 
-                        <label for="priority">
-                            Priority
-                        </label>
+                    <select id="category">
 
-                        <select id="priority">
+                        <option value="Work">
+                            Work
+                        </option>
 
-                            <option value="high">
-                                High
-                            </option>
+                        <option value="Study">
+                            Study
+                        </option>
 
-                            <option value="medium" selected>
-                                Medium
-                            </option>
+                        <option value="Personal">
+                            Personal
+                        </option>
 
-                            <option value="low">
-                                Low
-                            </option>
+                        <option value="Health">
+                            Health
+                        </option>
 
-                        </select>
+                        <option value="Shopping">
+                            Shopping
+                        </option>
 
-                    </div>
+                        <option value="Finance">
+                            Finance
+                        </option>
 
+                        <option value="Other" selected>
+                            Other
+                        </option>
 
-                    <div class="form-group">
-
-                        <label for="category">
-                            Category
-                        </label>
-
-                        <select id="category">
-
-                            <option value="Work">
-                                Work
-                            </option>
-
-                            <option value="Study">
-                                Study
-                            </option>
-
-                            <option value="Personal">
-                                Personal
-                            </option>
-
-                            <option value="Health">
-                                Health
-                            </option>
-
-                            <option value="Other" selected>
-                                Other
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="date">
-                            Due Date
-                        </label>
-
-                        <input
-                            type="date"
-                            id="date"
-                        >
-
-                    </div>
+                    </select>
 
                 </div>
 
+
+                <div class="form-group">
+
+                    <label for="date">
+                        Due Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="date"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="description">
+                    Description
+                </label>
+
+                <textarea
+                    id="description"
+                    rows="3"
+                    placeholder="Add more details about this task..."
+                    maxlength="1000"
+                ></textarea>
+
+            </div>
+
+
+            <div class="form-actions">
 
                 <button
                     type="submit"
                     id="addTaskButton"
                     class="primary-button"
                 >
-                    <span class="button-text">
+                    <span>
                         + Add Task
                     </span>
-
-                    <span class="button-loader"></span>
                 </button>
 
-            </form>
+            </div>
 
-        </section>
+        </form>
+
+    </section>
 
 
-        <!-- =====================================
-             SEARCH AND FILTER
-        ====================================== -->
+    <!-- SEARCH / FILTER -->
 
-        <section class="controls-section">
+    <section class="section">
 
-            <div class="search-container">
+        <div class="controls-header">
+
+            <div>
+
+                <h2>
+                    Your Tasks
+                </h2>
+
+                <p id="taskCountText">
+                    0 tasks
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="task-controls">
+
+            <div class="search-wrapper">
 
                 <span class="search-icon">
                     🔍
                 </span>
 
                 <input
-                    type="text"
+                    type="search"
                     id="searchInput"
                     placeholder="Search tasks..."
                 >
@@ -419,248 +819,206 @@
             </div>
 
 
-            <div class="filter-container">
+            <select id="priorityFilter">
 
-                <select id="priorityFilter">
+                <option value="all">
+                    All Priorities
+                </option>
 
-                    <option value="all">
-                        All Priorities
-                    </option>
+                <option value="high">
+                    High Priority
+                </option>
 
-                    <option value="high">
-                        High Priority
-                    </option>
+                <option value="medium">
+                    Medium Priority
+                </option>
 
-                    <option value="medium">
-                        Medium Priority
-                    </option>
+                <option value="low">
+                    Low Priority
+                </option>
 
-                    <option value="low">
-                        Low Priority
-                    </option>
-
-                </select>
+            </select>
 
 
-                <select id="categoryFilter">
+            <select id="categoryFilter">
 
-                    <option value="all">
-                        All Categories
-                    </option>
+                <option value="all">
+                    All Categories
+                </option>
 
-                    <option value="Work">
-                        Work
-                    </option>
+                <option value="Work">
+                    Work
+                </option>
 
-                    <option value="Study">
-                        Study
-                    </option>
+                <option value="Study">
+                    Study
+                </option>
 
-                    <option value="Personal">
-                        Personal
-                    </option>
+                <option value="Personal">
+                    Personal
+                </option>
 
-                    <option value="Health">
-                        Health
-                    </option>
+                <option value="Health">
+                    Health
+                </option>
 
-                    <option value="Other">
-                        Other
-                    </option>
+                <option value="Shopping">
+                    Shopping
+                </option>
 
-                </select>
+                <option value="Finance">
+                    Finance
+                </option>
 
+                <option value="Other">
+                    Other
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div id="taskList" class="task-list"></div>
+
+
+        <div
+            id="emptyState"
+            class="empty-state hidden"
+        >
+
+            <div class="empty-icon">
+                📝
             </div>
 
-        </section>
+            <h3 id="emptyTitle">
+                No tasks yet
+            </h3>
+
+            <p id="emptyDescription">
+                Create your first task and start making progress.
+            </p>
+
+        </div>
+
+    </section>
 
 
-        <!-- =====================================
-             TASK LIST
-        ====================================== -->
+    <!-- ANALYTICS -->
 
-        <section class="tasks-section">
+    <section class="section">
 
-            <div class="section-heading task-heading">
+        <div class="section-header">
 
-                <div>
+            <div>
 
-                    <h2>Your Tasks</h2>
+                <h2>
+                    Task Analytics
+                </h2>
 
-                    <p id="taskCountText">
-                        0 tasks
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="taskList"
-                class="task-list"
-            ></div>
-
-
-            <div
-                id="emptyState"
-                class="empty-state hidden"
-            >
-
-                <div class="empty-icon">
-                    ✨
-                </div>
-
-                <h3 id="emptyTitle">
-                    No tasks found
-                </h3>
-
-                <p id="emptyDescription">
-                    Create your first task and start making progress.
+                <p>
+                    Understand your productivity at a glance.
                 </p>
 
             </div>
 
-        </section>
+        </div>
 
 
-        <!-- =====================================
-             ANALYTICS
-        ====================================== -->
+        <div class="analytics-grid">
 
-        <section class="analytics-section">
+            <div class="analytics-card">
+                <span>High Priority</span>
+                <strong id="highPriorityCount">0</strong>
+            </div>
 
-            <div class="section-heading">
+            <div class="analytics-card">
+                <span>Medium Priority</span>
+                <strong id="mediumPriorityCount">0</strong>
+            </div>
 
-                <div>
+            <div class="analytics-card">
+                <span>Low Priority</span>
+                <strong id="lowPriorityCount">0</strong>
+            </div>
 
-                    <h2>Analytics</h2>
+            <div class="analytics-card">
+                <span>Completion Rate</span>
+                <strong id="analyticsCompletionRate">0%</strong>
+            </div>
 
-                    <p>Your productivity at a glance.</p>
+        </div>
 
-                </div>
+    </section>
+
+
+    <!-- AI DAILY PLAN -->
+
+    <section class="section ai-section">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>
+                    🤖 AI Daily Plan
+                </h2>
+
+                <p>
+                    Let TaskFlow AI organize your pending tasks.
+                </p>
 
             </div>
 
 
-            <div class="analytics-grid">
+            <button
+                id="generatePlanButton"
+                class="primary-button"
+                type="button"
+            >
+                ✨ Generate Plan
+            </button>
 
-                <div class="analytics-card">
-
-                    <span>High Priority</span>
-
-                    <strong id="highPriorityCount">
-                        0
-                    </strong>
-
-                </div>
+        </div>
 
 
-                <div class="analytics-card">
+        <div
+            id="aiPlan"
+            class="ai-plan hidden"
+        ></div>
 
-                    <span>Medium Priority</span>
-
-                    <strong id="mediumPriorityCount">
-                        0
-                    </strong>
-
-                </div>
+    </section>
 
 
-                <div class="analytics-card">
+    <!-- FOOTER -->
 
-                    <span>Low Priority</span>
+    <footer class="footer">
 
-                    <strong id="lowPriorityCount">
-                        0
-                    </strong>
+        <p>
+            TaskFlow AI
+            <span>•</span>
+            Smart productivity for everyday work
+        </p>
 
-                </div>
+        <p>
+            Built with Python, FastAPI, SQLite & JavaScript
+        </p>
 
+    </footer>
 
-                <div class="analytics-card">
-
-                    <span>Completion Rate</span>
-
-                    <strong id="analyticsCompletionRate">
-                        0%
-                    </strong>
-
-                </div>
-
-            </div>
-
-        </section>
+</div>
 
 
-        <!-- =====================================
-             AI DAILY PLAN
-        ====================================== -->
+<!-- =========================================
+     EDIT MODAL
+========================================= -->
 
-        <section class="ai-section">
+<div
+    id="editModal"
+    class="modal hidden"
+>
 
-            <div class="ai-header">
-
-                <div>
-
-                    <h2>🤖 AI Daily Plan</h2>
-
-                    <p>
-                        Get a prioritized plan from your pending tasks.
-                    </p>
-
-                </div>
-
-
-                <button
-                    id="generatePlanButton"
-                    class="ai-button"
-                >
-
-                    <span class="button-text">
-                        ✨ Generate Plan
-                    </span>
-
-                    <span class="button-loader"></span>
-
-                </button>
-
-            </div>
-
-
-            <div
-                id="aiPlan"
-                class="ai-plan hidden"
-            ></div>
-
-        </section>
-
-
-        <!-- =====================================
-             FOOTER
-        ====================================== -->
-
-        <footer class="footer">
-
-            <p>
-                TaskFlow AI • Built with HTML, CSS, JavaScript, FastAPI & SQLite
-            </p>
-
-        </footer>
-
-    </div>
-
-
-    <!-- =========================================
-         EDIT MODAL
-    ========================================== -->
-
-    <div
-        id="editModal"
-        class="modal hidden"
-    >
-
-        <div class="modal-overlay"></div>
+    <div class="modal-overlay">
 
         <div class="modal-content">
 
@@ -668,15 +1026,21 @@
 
                 <div>
 
-                    <h2>Edit Task</h2>
+                    <h2>
+                        Edit Task
+                    </h2>
 
-                    <p>Update your task details.</p>
+                    <p>
+                        Update your task details.
+                    </p>
 
                 </div>
 
                 <button
                     id="closeModalButton"
-                    class="close-button"
+                    class="modal-close"
+                    type="button"
+                    aria-label="Close"
                 >
                     ×
                 </button>
@@ -684,7 +1048,10 @@
             </div>
 
 
-            <form id="editTaskForm">
+            <form
+                id="editTaskForm"
+                class="edit-form"
+            >
 
                 <input
                     type="hidden"
@@ -695,13 +1062,14 @@
                 <div class="form-group">
 
                     <label for="editTitle">
-                        Task Title
+                        Task Title *
                     </label>
 
                     <input
                         type="text"
                         id="editTitle"
                         required
+                        maxlength="200"
                     >
 
                 </div>
@@ -716,6 +1084,7 @@
                     <textarea
                         id="editDescription"
                         rows="4"
+                        maxlength="1000"
                     ></textarea>
 
                 </div>
@@ -731,16 +1100,16 @@
 
                         <select id="editPriority">
 
-                            <option value="high">
-                                High
+                            <option value="low">
+                                Low
                             </option>
 
                             <option value="medium">
                                 Medium
                             </option>
 
-                            <option value="low">
-                                Low
+                            <option value="high">
+                                High
                             </option>
 
                         </select>
@@ -772,6 +1141,14 @@
                                 Health
                             </option>
 
+                            <option value="Shopping">
+                                Shopping
+                            </option>
+
+                            <option value="Finance">
+                                Finance
+                            </option>
+
                             <option value="Other">
                                 Other
                             </option>
@@ -780,19 +1157,19 @@
 
                     </div>
 
-                </div>
 
+                    <div class="form-group">
 
-                <div class="form-group">
+                        <label for="editDate">
+                            Due Date
+                        </label>
 
-                    <label for="editDate">
-                        Due Date
-                    </label>
+                        <input
+                            type="date"
+                            id="editDate"
+                        >
 
-                    <input
-                        type="date"
-                        id="editDate"
-                    >
+                    </div>
 
                 </div>
 
@@ -800,8 +1177,8 @@
                 <div class="modal-actions">
 
                     <button
-                        type="button"
                         id="cancelEditButton"
+                        type="button"
                         class="secondary-button"
                     >
                         Cancel
@@ -822,19 +1199,18 @@
 
     </div>
 
-
-    <!-- =========================================
-         TOAST CONTAINER
-    ========================================== -->
-
-    <div
-        id="toastContainer"
-        class="toast-container"
-    ></div>
+</div>
 
 
-    <script src="script.js"></script>
+<!-- TOAST -->
+
+<div
+    id="toastContainer"
+    class="toast-container"
+></div>
+
+
+<script src="script.js"></script>
 
 </body>
-
 </html>
